@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Api\FcmTokenController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\DeviceAccessController;
 use App\Http\Controllers\DeviceControlController;
 use App\Http\Controllers\DeviceController;
@@ -18,6 +20,10 @@ Route::prefix('v1')->group(function (): void {
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
+        Route::post('auth/fcm-token', [FcmTokenController::class, 'update']);
+
+        Route::get('notifications', [NotificationController::class, 'index']);
+        Route::patch('notifications/{notification}', [NotificationController::class, 'update']);
 
         Route::get('devices', [DeviceController::class, 'index']);
         Route::post('devices/claim', [DeviceController::class, 'claim'])->middleware('throttle:claims');

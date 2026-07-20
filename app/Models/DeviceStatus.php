@@ -34,6 +34,7 @@ class DeviceStatus extends Model
         if (! isset(self::$idCache[$code])) {
             self::$idCache[$code] = static::where('code', $code)->value('id');
         }
+
         return self::$idCache[$code];
     }
 

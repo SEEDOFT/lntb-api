@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -15,11 +17,11 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  */
 #[Fillable(['code', 'name', 'description'])]
-class DeviceAccessStatus extends Model
+class NotificationType extends Model
 {
-    public const string ACTIVE = 'active';
-
-    public const string REVOKED = 'revoked';
+    public const string WELCOME = 'welcome';
+    public const string SYSTEM = 'system';
+    public const string ALERT = 'alert';
 
     private static array $idCache = [];
 

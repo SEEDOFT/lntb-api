@@ -17,18 +17,18 @@ use Laravel\Sanctum\HasApiTokens;
 /**
  * @property int $id
  * @property string $name
- * @property string|null $phone_number
- * @property string|null $email
+ * @property string $country_code
+ * @property string $phone_number
  * @property string|null $google_id
  * @property string $password
+ * @property string|null $fcm_token
  * @property int $user_status_id
  * @property Carbon|null $phone_verified_at
- * @property Carbon|null $email_verified_at
  * @property Carbon|null $last_login_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'phone_number', 'email', 'google_id', 'password', 'user_status_id'])]
+#[Fillable(['name', 'country_code', 'phone_number', 'google_id', 'password', 'user_status_id', 'fcm_token'])]
 #[Hidden(['password', 'google_id'])]
 class User extends Authenticatable
 {
@@ -42,7 +42,6 @@ class User extends Authenticatable
         return [
             'user_status_id' => 'integer',
             'phone_verified_at' => 'datetime',
-            'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
             'password' => 'hashed',
         ];

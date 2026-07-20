@@ -8,6 +8,8 @@ use App\Models\DeviceAccessStatus;
 use App\Models\DeviceControlStatus;
 use App\Models\DeviceStatus;
 use App\Models\DeviceType;
+use App\Models\NotificationStatus;
+use App\Models\NotificationType;
 use App\Models\UserStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
@@ -41,6 +43,16 @@ class DatabaseSeeder extends Seeder
             DeviceControlStatus::PENDING => 'Pending',
             DeviceControlStatus::COMPLETED => 'Completed',
             DeviceControlStatus::FAILED => 'Failed',
+        ]);
+        $this->seedLookup(NotificationType::class, [
+            NotificationType::WELCOME => 'Welcome',
+            NotificationType::SYSTEM => 'System',
+            NotificationType::ALERT => 'Alert',
+        ]);
+        $this->seedLookup(NotificationStatus::class, [
+            NotificationStatus::UNREAD => 'Unread',
+            NotificationStatus::READ => 'Read',
+            NotificationStatus::DELETED => 'Deleted',
         ]);
     }
 

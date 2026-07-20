@@ -21,17 +21,38 @@ final class AuthController extends Controller
 
     public function register(RegisterRequest $request): JsonResponse
     {
-        return $this->authResponse($this->auth->register($request->validated(), $request), 'Registration completed successfully.', 201);
+        $result = $this->auth->register($request->validated(), $request);
+
+        return ApiResponse::success('Registration completed successfully.', [
+            'token' => $result['token'],
+            'token_type' => 'Bearer',
+            'expires_at' => $result['expires_at'],
+            'user' => (new UserResource($result['user']->load('status')))->resolve($request),
+        ], 201);
     }
 
     public function login(LoginRequest $request): JsonResponse
     {
-        return $this->authResponse($this->auth->login($request->validated(), $request), 'Login completed successfully.');
+        $result = $this->auth->login($request->validated(), $request);
+
+        return ApiResponse::success('Login completed successfully.', [
+            'token' => $result['token'],
+            'token_type' => 'Bearer',
+            'expires_at' => $result['expires_at'],
+            'user' => (new UserResource($result['user']->load('status')))->resolve($request),
+        ]);
     }
 
     public function google(GoogleLoginRequest $request): JsonResponse
     {
-        return $this->authResponse($this->auth->google($request->validated(), $request), 'Google authentication completed successfully.');
+        $result = $this->auth->google($request->validated(), $request);
+
+        return ApiResponse::success('Google authentication completed successfully.', [
+            'token' => $result['token'],
+            'token_type' => 'Bearer',
+            'expires_at' => $result['expires_at'],
+            'user' => (new UserResource($result['user']->load('status')))->resolve($request),
+        ]);
     }
 
     public function me(Request $request): JsonResponse
@@ -44,17 +65,5 @@ final class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return ApiResponse::success('Logout completed successfully.');
-    }
-
-    private function authResponse(array $result, string $message, int $status = 200): JsonResponse
-    {
-        $request = request();
-
-        return ApiResponse::success($message, [
-            'token' => $result['token'],
-            'token_type' => 'Bearer',
-            'expires_at' => $result['expires_at'],
-            'user' => (new UserResource($result['user']->load('status')))->resolve($request),
-        ], $status);
     }
 }

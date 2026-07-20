@@ -11,16 +11,18 @@ final class LoginRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
-        if (is_string($this->input('login'))) {
-            $this->merge(['login' => IdentityNormalizer::login($this->input('login'))]);
+        if (is_string($this->input('phone_number'))) {
+            $this->merge(['phone_number' => IdentityNormalizer::phone($this->input('phone_number'))]);
         }
     }
 
     public function rules(): array
     {
         return [
-            'login' => ['required', 'string', 'max:255'],
+            'country_code' => ['required', 'string', 'max:5'],
+            'phone_number' => ['required', 'string', 'max:20'],
             'password' => ['required', 'string', 'max:255'],
+            'fcm_token' => ['nullable', 'string', 'max:255'],
             'device_name' => ['nullable', 'string', 'max:120'],
             'platform' => ['nullable', 'string', 'max:50'],
             'app_version' => ['nullable', 'string', 'max:30'],

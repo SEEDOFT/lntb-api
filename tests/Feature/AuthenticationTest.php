@@ -3,17 +3,15 @@
 declare(strict_types=1);
 
 use App\Models\Device;
-use App\Models\DeviceAccessStatus;
-use App\Models\DeviceControlStatus;
 use App\Models\DeviceStatus;
 use App\Models\DeviceType;
 use App\Models\User;
 use App\Models\UserStatus;
-use App\Support\MacAddress;
+use Database\Seeders\DatabaseSeeder;
 use Illuminate\Support\Facades\Hash;
 
 beforeEach(function (): void {
-    $this->seed(\Database\Seeders\DatabaseSeeder::class);
+    $this->seed(DatabaseSeeder::class);
 });
 
 function authHeaders(string $token): array

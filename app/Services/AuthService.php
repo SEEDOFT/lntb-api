@@ -10,7 +10,7 @@ use App\Models\UserStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Http;
 use Throwable;
 
 final class AuthService
@@ -20,11 +20,14 @@ final class AuthService
         return DB::transaction(function () use ($data, $request): array {
             $user = User::query()->create([
                 'name' => $data['name'],
-                'phone_number' => $data['phone_number'] ?? null,
-                'email' => $data['email'] ?? null,
+                'country_code' => $data['country_code'],
+                'phone_number' => $data['phone_number'],
                 'password' => $data['password'],
+                'fcm_token' => $data['fcm_token'] ?? null,
                 'user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE),
             ]);
+
+            event(new \Illuminate\Auth\Events\Registered($user));
 
             return $this->issueToken($user, $request);
         });
@@ -32,15 +35,22 @@ final class AuthService
 
     public function login(array $data, Request $request): array
     {
-        $field = str_contains($data['login'], '@') ? 'email' : 'phone_number';
-        $user = User::query()->where($field, $data['login'])->first();
+        $user = User::query()
+            ->where('country_code', $data['country_code'])
+            ->where('phone_number', $data['phone_number'])
+            ->first();
+
         if ($user === null || $user->password === null || ! Hash::check($data['password'], $user->password)) {
             throw new BusinessException('INVALID_CREDENTIALS', 'The supplied credentials are invalid.', 401);
         }
         $this->ensureActive($user);
 
-        return DB::transaction(function () use ($user, $request): array {
-            $user->forceFill(['last_login_at' => now()])->save();
+        return DB::transaction(function () use ($user, $data, $request): array {
+            $updates = ['last_login_at' => now()];
+            if (isset($data['fcm_token'])) {
+                $updates['fcm_token'] = $data['fcm_token'];
+            }
+            $user->forceFill($updates)->save();
 
             return $this->issueToken($user, $request);
         });
@@ -49,44 +59,64 @@ final class AuthService
     public function google(array $data, Request $request): array
     {
         try {
-            $google = Socialite::driver('google')->userFromToken($data['access_token']);
-        } catch (Throwable) {
-            throw new BusinessException('INVALID_GOOGLE_TOKEN', 'The Google access token is invalid.', 401);
-        }
+            $response = Http::get('https://oauth2.googleapis.com/tokeninfo', [
+                'id_token' => $data['token'],
+            ]);
 
-        $googleId = (string) $google->getId();
-        $email = $google->getEmail() !== null ? strtolower(trim($google->getEmail())) : null;
-        $verified = $this->isVerifiedGoogleEmail($google);
-
-        return DB::transaction(function () use ($google, $googleId, $email, $verified, $request): array {
-            $user = User::query()->where('google_id', $googleId)->lockForUpdate()->first();
-            if ($user === null && $email !== null) {
-                $user = User::query()->where('email', $email)->lockForUpdate()->first();
-                if ($user !== null && ! $verified) {
-                    throw new BusinessException('GOOGLE_EMAIL_NOT_VERIFIED', 'The Google email must be verified before linking.', 409);
-                }
-                if ($user?->google_id !== null && $user->google_id !== $googleId) {
-                    throw new BusinessException('GOOGLE_ACCOUNT_CONFLICT', 'The email is linked to another Google account.', 409);
-                }
+            if ($response->failed()) {
+                throw new \Exception('Failed to fetch user from Google tokeninfo.');
             }
 
+            $googleUser = $response->json();
+
+            // Validate Audience
+            $allowedAudiences = [
+                config('services.google.client_id'),
+                config('services.google.ios_client_id'),
+            ];
+
+            if (! in_array($googleUser['aud'] ?? '', $allowedAudiences)) {
+                $receivedAud = $googleUser['aud'] ?? 'null';
+                throw new BusinessException('INVALID_GOOGLE_TOKEN', 'The Google token audience is invalid. Received: ' . $receivedAud, 401);
+            }
+
+            if (! isset($googleUser['sub'])) {
+                throw new \Exception('Google user payload missing sub.');
+            }
+
+            $googleId = (string) $googleUser['sub'];
+            $name = $googleUser['name'] ?? explode('@', $googleUser['email'] ?? 'Google User')[0];
+        } catch (BusinessException $e) {
+            throw $e;
+        } catch (Throwable) {
+            throw new BusinessException('INVALID_GOOGLE_TOKEN', 'The Google token is invalid.', 401);
+        }
+
+        return DB::transaction(function () use ($googleId, $name, $data, $request): array {
+            $user = User::query()->where('google_id', $googleId)->lockForUpdate()->first();
+            $isNew = false;
+
             if ($user === null) {
-                if ($email === null || ! $verified) {
-                    throw new BusinessException('GOOGLE_EMAIL_REQUIRED', 'A verified Google email is required.', 409);
-                }
                 $user = User::query()->create([
-                    'name' => $google->getName() ?: $email,
-                    'email' => $email,
+                    'name' => $name,
                     'google_id' => $googleId,
-                    'email_verified_at' => now(),
+                    'country_code' => '+855',
                     'user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE),
                 ]);
-            } elseif ($user->google_id === null) {
-                $user->forceFill(['google_id' => $googleId, 'email_verified_at' => $user->email_verified_at ?? now()])->save();
+                $isNew = true;
             }
 
             $this->ensureActive($user);
-            $user->forceFill(['last_login_at' => now()])->save();
+            
+            $updates = ['last_login_at' => now()];
+            if (isset($data['fcm_token'])) {
+                $updates['fcm_token'] = $data['fcm_token'];
+            }
+            $user->forceFill($updates)->save();
+
+            if ($isNew) {
+                event(new \Illuminate\Auth\Events\Registered($user));
+            }
 
             return $this->issueToken($user, $request);
         });
@@ -111,12 +141,5 @@ final class AuthService
             'token' => $token->plainTextToken,
             'expires_at' => $expiresAt,
         ];
-    }
-
-    private function isVerifiedGoogleEmail(\Laravel\Socialite\Contracts\User $user): bool
-    {
-        $raw = $user->getRaw();
-
-        return filter_var($raw['verified_email'] ?? $raw['email_verified'] ?? false, FILTER_VALIDATE_BOOL);
     }
 }

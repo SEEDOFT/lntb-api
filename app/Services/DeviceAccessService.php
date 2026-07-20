@@ -65,7 +65,7 @@ final class DeviceAccessService
 
     public function revoke(Device $device, DeviceUserAccess $access, User $owner): DeviceUserAccess
     {
-        return DB::transaction(function () use ($device, $access, $owner): DeviceUserAccess {
+        return DB::transaction(function () use ($device, $access): DeviceUserAccess {
             Device::query()->lockForUpdate()->findOrFail($device->id);
             $locked = DeviceUserAccess::query()->lockForUpdate()->findOrFail($access->id);
 
