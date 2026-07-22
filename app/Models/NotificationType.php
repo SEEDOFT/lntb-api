@@ -20,19 +20,15 @@ use Illuminate\Support\Carbon;
 class NotificationType extends Model
 {
     public const string WELCOME = 'welcome';
+    public const int ID_WELCOME = 1;
+
     public const string SYSTEM = 'system';
+    public const int ID_SYSTEM = 2;
+
     public const string ALERT = 'alert';
+    public const int ID_ALERT = 3;
 
-    private static array $idCache = [];
 
-    public static function resolveId(string $code): int
-    {
-        if (! isset(self::$idCache[$code])) {
-            self::$idCache[$code] = static::where('code', $code)->value('id');
-        }
-
-        return self::$idCache[$code];
-    }
 
     /** @return array<string, mixed> */
     #[\Override]

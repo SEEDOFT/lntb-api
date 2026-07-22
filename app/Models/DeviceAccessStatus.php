@@ -18,19 +18,12 @@ use Illuminate\Support\Carbon;
 class DeviceAccessStatus extends Model
 {
     public const string ACTIVE = 'active';
+    public const int ID_ACTIVE = 1;
 
     public const string REVOKED = 'revoked';
+    public const int ID_REVOKED = 2;
 
-    private static array $idCache = [];
 
-    public static function resolveId(string $code): int
-    {
-        if (! isset(self::$idCache[$code])) {
-            self::$idCache[$code] = static::where('code', $code)->value('id');
-        }
-
-        return self::$idCache[$code];
-    }
 
     /** @return array<string, mixed> */
     #[\Override]

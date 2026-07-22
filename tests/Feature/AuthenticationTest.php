@@ -30,8 +30,8 @@ function createDevice(): array
     $mac = 'AA:BB:CC:DD:EE:01';
 
     $device = Device::query()->create([
-        'device_type_id' => DeviceType::resolveId(DeviceType::SMART_FARM_CONTROLLER),
-        'device_status_id' => DeviceStatus::resolveId(DeviceStatus::AVAILABLE),
+        'device_type_id' => DeviceType::ID_SMART_FARM_CONTROLLER,
+        'device_status_id' => DeviceStatus::ID_AVAILABLE,
         'serial_number' => 'SN-TEST-001',
         'mac_address' => $mac,
         'claim_code_hash' => Hash::make($claimCode),
@@ -47,20 +47,21 @@ function createDevice(): array
 it('registers a new user', function (): void {
     $response = $this->postJson('/api/v1/auth/register', [
         'name' => 'John Doe',
-        'email' => 'john@example.com',
-        'phone_number' => '+6281234567890',
+        'country_code' => '+62',
+        'phone_number' => '81234567890',
         'password' => 'Str0ng!Passw0rd',
         'password_confirmation' => 'Str0ng!Passw0rd',
     ]);
 
     $response->assertStatus(201)
-        ->assertJsonStructure(['message', 'data' => ['token', 'token_type', 'expires_at', 'user']]);
+        ->assertJsonStructure(['status' => ['message'], 'data' => ['token', 'token_type', 'expires_at', 'user']]);
 });
 
 it('fails registration with weak password', function (): void {
     $response = $this->postJson('/api/v1/auth/register', [
         'name' => 'John Doe',
-        'email' => 'john@example.com',
+        'country_code' => '+62',
+        'phone_number' => '81234567890',
         'password' => 'weak',
         'password_confirmation' => 'weak',
     ]);
@@ -68,14 +69,15 @@ it('fails registration with weak password', function (): void {
     $response->assertStatus(422);
 });
 
-it('logs in with email', function (): void {
+it('logs in with phone number', function (): void {
     $user = User::factory()->create([
         'password' => Hash::make('Str0ng!Passw0rd'),
-        'user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE),
+        'user_status_id' => UserStatus::ID_ACTIVE,
     ]);
 
     $response = $this->postJson('/api/v1/auth/login', [
-        'login' => $user->email,
+        'country_code' => $user->country_code,
+        'phone_number' => $user->phone_number,
         'password' => 'Str0ng!Passw0rd',
     ]);
 
@@ -86,11 +88,12 @@ it('logs in with email', function (): void {
 it('fails login with wrong password', function (): void {
     $user = User::factory()->create([
         'password' => Hash::make('Str0ng!Passw0rd'),
-        'user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE),
+        'user_status_id' => UserStatus::ID_ACTIVE,
     ]);
 
     $response = $this->postJson('/api/v1/auth/login', [
-        'login' => $user->email,
+        'country_code' => $user->country_code,
+        'phone_number' => $user->phone_number,
         'password' => 'wrong-password',
     ]);
 
@@ -98,7 +101,7 @@ it('fails login with wrong password', function (): void {
 });
 
 it('retrieves current user', function (): void {
-    $user = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $user = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $user->createToken('test')->plainTextToken;
 
     $response = $this->getJson('/api/v1/auth/me', authHeaders($token));
@@ -107,7 +110,7 @@ it('retrieves current user', function (): void {
 });
 
 it('logs out', function (): void {
-    $user = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $user = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $user->createToken('test')->plainTextToken;
 
     $response = $this->postJson('/api/v1/auth/logout', [], authHeaders($token));
@@ -125,12 +128,12 @@ it('rejects unauthenticated requests', function (): void {
 // ─── DEVICES ──────────────────────────────────────────────────────
 
 it('lists accessible devices for owner', function (): void {
-    $user = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $user = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $user->createToken('test')->plainTextToken;
     $d = createDevice();
     $d['device']->update([
         'owner_user_id' => $user->id,
-        'device_status_id' => DeviceStatus::resolveId(DeviceStatus::ACTIVE),
+        'device_status_id' => DeviceStatus::ID_ACTIVE,
     ]);
 
     $response = $this->getJson('/api/v1/devices', authHeaders($token));
@@ -140,7 +143,7 @@ it('lists accessible devices for owner', function (): void {
 });
 
 it('claims a device', function (): void {
-    $user = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $user = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $user->createToken('test')->plainTextToken;
     $d = createDevice();
 
@@ -155,7 +158,7 @@ it('claims a device', function (): void {
 });
 
 it('fails claiming already claimed device', function (): void {
-    $user = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $user = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $user->createToken('test')->plainTextToken;
     $d = createDevice();
     $d['device']->update(['owner_user_id' => User::factory()->create()->id]);
@@ -169,12 +172,12 @@ it('fails claiming already claimed device', function (): void {
 });
 
 it('shows a device', function (): void {
-    $user = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $user = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $user->createToken('test')->plainTextToken;
     $d = createDevice();
     $d['device']->update([
         'owner_user_id' => $user->id,
-        'device_status_id' => DeviceStatus::resolveId(DeviceStatus::ACTIVE),
+        'device_status_id' => DeviceStatus::ID_ACTIVE,
     ]);
 
     $response = $this->getJson("/api/v1/devices/{$d['device']->id}", authHeaders($token));
@@ -185,72 +188,72 @@ it('shows a device', function (): void {
 // ─── DEVICE USERS ─────────────────────────────────────────────────
 
 it('owner grants access to another user', function (): void {
-    $owner = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $owner = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $owner->createToken('test')->plainTextToken;
-    $grantee = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $grantee = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $d = createDevice();
     $d['device']->update([
         'owner_user_id' => $owner->id,
-        'device_status_id' => DeviceStatus::resolveId(DeviceStatus::ACTIVE),
+        'device_status_id' => DeviceStatus::ID_ACTIVE,
     ]);
 
     $response = $this->postJson("/api/v1/devices/{$d['device']->id}/users", [
-        'login' => $grantee->email,
+        'login' => $grantee->phone_number,
     ], authHeaders($token));
 
     $response->assertStatus(201);
 });
 
 it('owner cannot grant access to themselves', function (): void {
-    $owner = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $owner = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $owner->createToken('test')->plainTextToken;
     $d = createDevice();
     $d['device']->update([
         'owner_user_id' => $owner->id,
-        'device_status_id' => DeviceStatus::resolveId(DeviceStatus::ACTIVE),
+        'device_status_id' => DeviceStatus::ID_ACTIVE,
     ]);
 
     $response = $this->postJson("/api/v1/devices/{$d['device']->id}/users", [
-        'login' => $owner->email,
+        'login' => $owner->phone_number,
     ], authHeaders($token));
 
     $response->assertStatus(409);
 });
 
 it('enforces 5-user limit', function (): void {
-    $owner = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $owner = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $owner->createToken('test')->plainTextToken;
     $d = createDevice();
     $d['device']->update([
         'owner_user_id' => $owner->id,
-        'device_status_id' => DeviceStatus::resolveId(DeviceStatus::ACTIVE),
+        'device_status_id' => DeviceStatus::ID_ACTIVE,
     ]);
 
     for ($i = 0; $i < 5; $i++) {
-        $u = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+        $u = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
         $this->postJson("/api/v1/devices/{$d['device']->id}/users", [
-            'login' => $u->email,
+            'login' => $u->phone_number,
         ], authHeaders($token))->assertStatus(201);
     }
 
-    $extra = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $extra = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $response = $this->postJson("/api/v1/devices/{$d['device']->id}/users", [
-        'login' => $extra->email,
+        'login' => $extra->phone_number,
     ], authHeaders($token));
     $response->assertStatus(409);
 });
 
 it('owner lists device users', function (): void {
-    $owner = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $owner = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $owner->createToken('test')->plainTextToken;
-    $grantee = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $grantee = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $d = createDevice();
     $d['device']->update([
         'owner_user_id' => $owner->id,
-        'device_status_id' => DeviceStatus::resolveId(DeviceStatus::ACTIVE),
+        'device_status_id' => DeviceStatus::ID_ACTIVE,
     ]);
     $this->postJson("/api/v1/devices/{$d['device']->id}/users", [
-        'login' => $grantee->email,
+        'login' => $grantee->phone_number,
     ], authHeaders($token));
 
     $response = $this->getJson("/api/v1/devices/{$d['device']->id}/users", authHeaders($token));
@@ -260,17 +263,17 @@ it('owner lists device users', function (): void {
 });
 
 it('owner revokes user access', function (): void {
-    $owner = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $owner = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $owner->createToken('test')->plainTextToken;
-    $grantee = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $grantee = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $d = createDevice();
     $d['device']->update([
         'owner_user_id' => $owner->id,
-        'device_status_id' => DeviceStatus::resolveId(DeviceStatus::ACTIVE),
+        'device_status_id' => DeviceStatus::ID_ACTIVE,
     ]);
 
     $grant = $this->postJson("/api/v1/devices/{$d['device']->id}/users", [
-        'login' => $grantee->email,
+        'login' => $grantee->phone_number,
     ], authHeaders($token));
     $accessId = $grant->json('data.id');
 
@@ -283,12 +286,12 @@ it('owner revokes user access', function (): void {
 // ─── DEVICE CONTROLS ──────────────────────────────────────────────
 
 it('owner stores a control command', function (): void {
-    $owner = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $owner = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $owner->createToken('test')->plainTextToken;
     $d = createDevice();
     $d['device']->update([
         'owner_user_id' => $owner->id,
-        'device_status_id' => DeviceStatus::resolveId(DeviceStatus::ACTIVE),
+        'device_status_id' => DeviceStatus::ID_ACTIVE,
     ]);
 
     $response = $this->postJson("/api/v1/devices/{$d['device']->id}/controls", [
@@ -301,17 +304,17 @@ it('owner stores a control command', function (): void {
 });
 
 it('shared user stores a control command', function (): void {
-    $owner = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
-    $grantee = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $owner = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
+    $grantee = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $granteeToken = $grantee->createToken('test')->plainTextToken;
     $d = createDevice();
     $d['device']->update([
         'owner_user_id' => $owner->id,
-        'device_status_id' => DeviceStatus::resolveId(DeviceStatus::ACTIVE),
+        'device_status_id' => DeviceStatus::ID_ACTIVE,
     ]);
     $ownerToken = $owner->createToken('test')->plainTextToken;
     $this->postJson("/api/v1/devices/{$d['device']->id}/users", [
-        'login' => $grantee->email,
+        'login' => $grantee->phone_number,
     ], authHeaders($ownerToken));
 
     $response = $this->postJson("/api/v1/devices/{$d['device']->id}/controls", [
@@ -322,13 +325,13 @@ it('shared user stores a control command', function (): void {
 });
 
 it('unauthorized user cannot control device', function (): void {
-    $owner = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
-    $stranger = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $owner = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
+    $stranger = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $strangerToken = $stranger->createToken('test')->plainTextToken;
     $d = createDevice();
     $d['device']->update([
         'owner_user_id' => $owner->id,
-        'device_status_id' => DeviceStatus::resolveId(DeviceStatus::ACTIVE),
+        'device_status_id' => DeviceStatus::ID_ACTIVE,
     ]);
 
     $response = $this->postJson("/api/v1/devices/{$d['device']->id}/controls", [
@@ -339,12 +342,12 @@ it('unauthorized user cannot control device', function (): void {
 });
 
 it('lists control history', function (): void {
-    $owner = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $owner = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $owner->createToken('test')->plainTextToken;
     $d = createDevice();
     $d['device']->update([
         'owner_user_id' => $owner->id,
-        'device_status_id' => DeviceStatus::resolveId(DeviceStatus::ACTIVE),
+        'device_status_id' => DeviceStatus::ID_ACTIVE,
     ]);
     $this->postJson("/api/v1/devices/{$d['device']->id}/controls", [
         'control_type' => 'irrigation.start',
@@ -359,7 +362,7 @@ it('lists control history', function (): void {
 // ─── 404 HANDLING ─────────────────────────────────────────────────
 
 it('returns 404 for non-existent device', function (): void {
-    $user = User::factory()->create(['user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE)]);
+    $user = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $user->createToken('test')->plainTextToken;
 
     $this->getJson('/api/v1/devices/99999', authHeaders($token))->assertStatus(404);

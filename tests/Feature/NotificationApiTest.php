@@ -19,13 +19,13 @@ beforeEach(function () {
         'country_code' => '+855',
         'phone_number' => '123456789',
         'password' => bcrypt('password'),
-        'user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE),
+        'user_status_id' => UserStatus::ID_ACTIVE,
     ]);
 
     $this->notification = Notification::create([
         'user_id' => $this->user->id,
-        'notification_type_id' => NotificationType::resolveId(NotificationType::WELCOME),
-        'notification_status_id' => NotificationStatus::resolveId(NotificationStatus::UNREAD),
+        'notification_type_id' => NotificationType::ID_WELCOME,
+        'notification_status_id' => NotificationStatus::ID_UNREAD,
         'title' => 'Test Notification',
         'body' => 'This is a test.',
     ]);
@@ -49,7 +49,7 @@ test('user can mark notification as read', function () {
 
     $this->assertDatabaseHas('notifications', [
         'id' => $this->notification->id,
-        'notification_status_id' => NotificationStatus::resolveId(NotificationStatus::READ),
+        'notification_status_id' => NotificationStatus::ID_READ,
     ]);
 });
 

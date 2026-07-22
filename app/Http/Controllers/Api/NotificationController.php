@@ -20,7 +20,7 @@ final class NotificationController extends Controller
         $page = Notification::query()
             ->with(['type:id,code,name', 'status:id,code,name'])
             ->where('user_id', $request->user()->id)
-            ->where('notification_status_id', '!=', NotificationStatus::resolveId(NotificationStatus::DELETED))
+            ->where('notification_status_id', '!=', NotificationStatus::ID_DELETED)
             ->orderByDesc('created_at')
             ->paginate(20);
 
@@ -40,8 +40,14 @@ final class NotificationController extends Controller
             'status' => ['required', 'string', Rule::in([NotificationStatus::READ, NotificationStatus::UNREAD, NotificationStatus::DELETED])],
         ]);
 
+        $statusMap = [
+            NotificationStatus::READ => NotificationStatus::ID_READ,
+            NotificationStatus::UNREAD => NotificationStatus::ID_UNREAD,
+            NotificationStatus::DELETED => NotificationStatus::ID_DELETED,
+        ];
+
         $notification->forceFill([
-            'notification_status_id' => NotificationStatus::resolveId($validated['status']),
+            'notification_status_id' => $statusMap[$validated['status']],
         ])->save();
 
         return ApiResponse::success(

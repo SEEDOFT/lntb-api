@@ -24,10 +24,16 @@ final class NotificationService
      */
     public function sendToUser(User $user, string $title, string $body, array $data = [], string $typeCode = \App\Models\NotificationType::SYSTEM): bool
     {
+        $typeMap = [
+            \App\Models\NotificationType::WELCOME => \App\Models\NotificationType::ID_WELCOME,
+            \App\Models\NotificationType::SYSTEM => \App\Models\NotificationType::ID_SYSTEM,
+            \App\Models\NotificationType::ALERT => \App\Models\NotificationType::ID_ALERT,
+        ];
+
         $notification = \App\Models\Notification::create([
             'user_id' => $user->id,
-            'notification_type_id' => \App\Models\NotificationType::resolveId($typeCode),
-            'notification_status_id' => \App\Models\NotificationStatus::resolveId(\App\Models\NotificationStatus::UNREAD),
+            'notification_type_id' => $typeMap[$typeCode] ?? \App\Models\NotificationType::ID_SYSTEM,
+            'notification_status_id' => \App\Models\NotificationStatus::ID_UNREAD,
             'title' => $title,
             'body' => $body,
             'data' => empty($data) ? null : $data,

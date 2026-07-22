@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Exceptions\BusinessException;
 use App\Models\User;
 use App\Models\UserStatus;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -24,10 +25,10 @@ final class AuthService
                 'phone_number' => $data['phone_number'],
                 'password' => $data['password'],
                 'fcm_token' => $data['fcm_token'] ?? null,
-                'user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE),
+                'user_status_id' => UserStatus::ID_ACTIVE,
             ]);
 
-            event(new \Illuminate\Auth\Events\Registered($user));
+            event(new Registered($user));
 
             return $this->issueToken($user, $request);
         });
@@ -77,7 +78,7 @@ final class AuthService
 
             if (! in_array($googleUser['aud'] ?? '', $allowedAudiences)) {
                 $receivedAud = $googleUser['aud'] ?? 'null';
-                throw new BusinessException('INVALID_GOOGLE_TOKEN', 'The Google token audience is invalid. Received: ' . $receivedAud, 401);
+                throw new BusinessException('INVALID_GOOGLE_TOKEN', 'The Google token audience is invalid. Received: '.$receivedAud, 401);
             }
 
             if (! isset($googleUser['sub'])) {
@@ -101,13 +102,13 @@ final class AuthService
                     'name' => $name,
                     'google_id' => $googleId,
                     'country_code' => '+855',
-                    'user_status_id' => UserStatus::resolveId(UserStatus::ACTIVE),
+                    'user_status_id' => UserStatus::ID_ACTIVE,
                 ]);
                 $isNew = true;
             }
 
             $this->ensureActive($user);
-            
+
             $updates = ['last_login_at' => now()];
             if (isset($data['fcm_token'])) {
                 $updates['fcm_token'] = $data['fcm_token'];
@@ -115,7 +116,7 @@ final class AuthService
             $user->forceFill($updates)->save();
 
             if ($isNew) {
-                event(new \Illuminate\Auth\Events\Registered($user));
+                event(new Registered($user));
             }
 
             return $this->issueToken($user, $request);
@@ -124,7 +125,7 @@ final class AuthService
 
     public function ensureActive(User $user): void
     {
-        $activeId = UserStatus::resolveId(UserStatus::ACTIVE);
+        $activeId = UserStatus::ID_ACTIVE;
         if ($user->user_status_id !== $activeId) {
             throw new BusinessException('ACCOUNT_NOT_ACTIVE', 'The account is not active.', 403);
         }

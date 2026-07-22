@@ -18,21 +18,15 @@ use Illuminate\Support\Carbon;
 class DeviceControlStatus extends Model
 {
     public const string PENDING = 'pending';
+    public const int ID_PENDING = 1;
 
     public const string COMPLETED = 'completed';
+    public const int ID_COMPLETED = 2;
 
     public const string FAILED = 'failed';
+    public const int ID_FAILED = 3;
 
-    private static array $idCache = [];
 
-    public static function resolveId(string $code): int
-    {
-        if (! isset(self::$idCache[$code])) {
-            self::$idCache[$code] = static::where('code', $code)->value('id');
-        }
-
-        return self::$idCache[$code];
-    }
 
     /** @return array<string, mixed> */
     #[\Override]

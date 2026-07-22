@@ -5,7 +5,7 @@ use App\Models\UserStatus;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
-    $this->activeStatusId = UserStatus::resolveId(UserStatus::ACTIVE);
+    $this->activeStatusId = UserStatus::ID_ACTIVE;
     config(['services.google.client_id' => 'test-web-client-id']);
     config(['services.google.ios_client_id' => 'test-ios-client-id']);
 });

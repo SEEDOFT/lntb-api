@@ -18,21 +18,15 @@ use Illuminate\Support\Carbon;
 class UserStatus extends Model
 {
     public const string ACTIVE = 'active';
+    public const int ID_ACTIVE = 1;
 
     public const string SUSPENDED = 'suspended';
+    public const int ID_SUSPENDED = 2;
 
     public const string CLOSED = 'closed';
+    public const int ID_CLOSED = 3;
 
-    private static array $idCache = [];
 
-    public static function resolveId(string $code): int
-    {
-        if (! isset(self::$idCache[$code])) {
-            self::$idCache[$code] = static::where('code', $code)->value('id');
-        }
-
-        return self::$idCache[$code];
-    }
 
     /** @return array<string, mixed> */
     #[\Override]

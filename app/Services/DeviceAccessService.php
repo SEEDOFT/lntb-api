@@ -44,7 +44,7 @@ final class DeviceAccessService
 
             $values = [
                 'granted_by_user_id' => $owner->id,
-                'device_access_status_id' => DeviceAccessStatus::resolveId(DeviceAccessStatus::ACTIVE),
+                'device_access_status_id' => DeviceAccessStatus::ID_ACTIVE,
                 'granted_at' => now(),
                 'revoked_at' => null,
             ];
@@ -79,7 +79,7 @@ final class DeviceAccessService
             }
 
             $locked->forceFill([
-                'device_access_status_id' => DeviceAccessStatus::resolveId(DeviceAccessStatus::REVOKED),
+                'device_access_status_id' => DeviceAccessStatus::ID_REVOKED,
                 'revoked_at' => now(),
             ])->save();
 

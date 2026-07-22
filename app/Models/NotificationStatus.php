@@ -20,19 +20,13 @@ use Illuminate\Support\Carbon;
 class NotificationStatus extends Model
 {
     public const string UNREAD = 'unread';
+    public const int ID_UNREAD = 1;
     public const string READ = 'read';
+    public const int ID_READ = 2;
     public const string DELETED = 'deleted';
+    public const int ID_DELETED = 3;
 
-    private static array $idCache = [];
 
-    public static function resolveId(string $code): int
-    {
-        if (! isset(self::$idCache[$code])) {
-            self::$idCache[$code] = static::where('code', $code)->value('id');
-        }
-
-        return self::$idCache[$code];
-    }
 
     /** @return array<string, mixed> */
     #[\Override]
