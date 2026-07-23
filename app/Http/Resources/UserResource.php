@@ -14,11 +14,19 @@ final class UserResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'phone_number' => $this->phone_number,
             'email' => $this->email,
-            'status' => $this->whenLoaded('status', fn () => ['code' => $this->status->code, 'name' => $this->status->name]),
+            'country_code' => $this->country_code,
+            'phone_number' => $this->phone_number,
+            'status' => $this->whenLoaded(
+                'status',
+                fn (): array => [
+                    'code' => $this->status->code,
+                    'name' => $this->status->name,
+                ],
+            ),
             'phone_verified_at' => $this->phone_verified_at,
             'email_verified_at' => $this->email_verified_at,
+            'last_login_at' => $this->last_login_at,
             'created_at' => $this->created_at,
         ];
     }

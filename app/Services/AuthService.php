@@ -16,30 +16,37 @@ use Throwable;
 
 final class AuthService
 {
+    public function __construct(
+        private readonly FcmTokenService $fcmTokens,
+    ) {}
+
     public function register(array $data, Request $request): array
     {
         return DB::transaction(function () use ($data, $request): array {
             $user = User::query()->create([
                 'name' => $data['name'],
-                'country_code' => $data['country_code'],
-                'phone_number' => $data['phone_number'],
+                'country_code' => $data['country_code'] ?? null,
+                'phone_number' => $data['phone_number'] ?? null,
+                'email' => $data['email'] ?? null,
                 'password' => $data['password'],
-                'fcm_token' => $data['fcm_token'] ?? null,
                 'user_status_id' => UserStatus::ID_ACTIVE,
             ]);
 
+            $this->fcmTokens->syncFromPayload($user, $data);
             event(new Registered($user));
 
-            return $this->issueToken($user, $request);
+            return $this->issueToken($user, $request, true);
         });
     }
 
     public function login(array $data, Request $request): array
     {
-        $user = User::query()
-            ->where('country_code', $data['country_code'])
-            ->where('phone_number', $data['phone_number'])
-            ->first();
+        $user = isset($data['email'])
+            ? User::query()->where('email', $data['email'])->first()
+            : User::query()
+                ->where('country_code', $data['country_code'])
+                ->where('phone_number', $data['phone_number'])
+                ->first();
 
         if ($user === null || $user->password === null || ! Hash::check($data['password'], $user->password)) {
             throw new BusinessException('INVALID_CREDENTIALS', 'The supplied credentials are invalid.', 401);
@@ -48,12 +55,10 @@ final class AuthService
 
         return DB::transaction(function () use ($user, $data, $request): array {
             $updates = ['last_login_at' => now()];
-            if (isset($data['fcm_token'])) {
-                $updates['fcm_token'] = $data['fcm_token'];
-            }
             $user->forceFill($updates)->save();
+            $this->fcmTokens->syncFromPayload($user, $data);
 
-            return $this->issueToken($user, $request);
+            return $this->issueToken($user, $request, false);
         });
     }
 
@@ -86,6 +91,8 @@ final class AuthService
             }
 
             $googleId = (string) $googleUser['sub'];
+            $email = isset($googleUser['email']) ? strtolower((string) $googleUser['email']) : null;
+            $emailVerified = filter_var($googleUser['email_verified'] ?? false, FILTER_VALIDATE_BOOL);
             $name = $googleUser['name'] ?? explode('@', $googleUser['email'] ?? 'Google User')[0];
         } catch (BusinessException $e) {
             throw $e;
@@ -93,33 +100,47 @@ final class AuthService
             throw new BusinessException('INVALID_GOOGLE_TOKEN', 'The Google token is invalid.', 401);
         }
 
-        return DB::transaction(function () use ($googleId, $name, $data, $request): array {
+        return DB::transaction(function () use ($googleId, $email, $emailVerified, $name, $data, $request): array {
             $user = User::query()->where('google_id', $googleId)->lockForUpdate()->first();
             $isNew = false;
+
+            if ($user === null && $email !== null && $emailVerified) {
+                $user = User::query()->where('email', $email)->lockForUpdate()->first();
+            }
 
             if ($user === null) {
                 $user = User::query()->create([
                     'name' => $name,
                     'google_id' => $googleId,
-                    'country_code' => '+855',
+                    'email' => $emailVerified ? $email : null,
+                    'email_verified_at' => $emailVerified ? now() : null,
                     'user_status_id' => UserStatus::ID_ACTIVE,
                 ]);
                 $isNew = true;
+            } elseif ($user->google_id !== null && $user->google_id !== $googleId) {
+                throw new BusinessException(
+                    'GOOGLE_ACCOUNT_CONFLICT',
+                    'This email address is already linked to another Google account.',
+                    409,
+                );
+            } elseif ($user->google_id === null) {
+                $user->forceFill([
+                    'google_id' => $googleId,
+                    'email_verified_at' => $emailVerified ? now() : $user->email_verified_at,
+                ])->save();
             }
 
             $this->ensureActive($user);
 
             $updates = ['last_login_at' => now()];
-            if (isset($data['fcm_token'])) {
-                $updates['fcm_token'] = $data['fcm_token'];
-            }
             $user->forceFill($updates)->save();
+            $this->fcmTokens->syncFromPayload($user, $data);
 
             if ($isNew) {
                 event(new Registered($user));
             }
 
-            return $this->issueToken($user, $request);
+            return $this->issueToken($user, $request, $isNew);
         });
     }
 
@@ -131,7 +152,7 @@ final class AuthService
         }
     }
 
-    private function issueToken(User $user, Request $request): array
+    private function issueToken(User $user, Request $request, bool $isNewAccount): array
     {
         $deviceName = $request->input('device_name', $request->input('platform', 'mobile'));
         $expiresAt = now()->addDays(30);
@@ -140,7 +161,9 @@ final class AuthService
         return [
             'user' => $user,
             'token' => $token->plainTextToken,
+            'token_type' => 'Bearer',
             'expires_at' => $expiresAt,
+            'is_new_account' => $isNewAccount,
         ];
     }
 }

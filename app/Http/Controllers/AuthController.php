@@ -6,9 +6,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\GoogleLoginRequest;
 use App\Http\Requests\LoginRequest;
+use App\Http\Requests\LogoutRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Services\AuthService;
+use App\Services\FcmTokenService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +19,7 @@ final class AuthController extends Controller
 {
     public function __construct(
         private readonly AuthService $auth,
+        private readonly FcmTokenService $fcmTokens,
     ) {}
 
     public function register(RegisterRequest $request): JsonResponse
@@ -28,6 +31,7 @@ final class AuthController extends Controller
             'token_type' => 'Bearer',
             'expires_at' => $result['expires_at'],
             'user' => (new UserResource($result['user']->load('status')))->resolve($request),
+            'is_new_account' => $result['is_new_account'],
         ], 201);
     }
 
@@ -40,6 +44,7 @@ final class AuthController extends Controller
             'token_type' => 'Bearer',
             'expires_at' => $result['expires_at'],
             'user' => (new UserResource($result['user']->load('status')))->resolve($request),
+            'is_new_account' => $result['is_new_account'],
         ]);
     }
 
@@ -52,16 +57,24 @@ final class AuthController extends Controller
             'token_type' => 'Bearer',
             'expires_at' => $result['expires_at'],
             'user' => (new UserResource($result['user']->load('status')))->resolve($request),
+            'is_new_account' => $result['is_new_account'],
         ]);
     }
 
     public function me(Request $request): JsonResponse
     {
-        return ApiResponse::success('Current user retrieved successfully.', (new UserResource($request->user()->load('status')))->resolve($request));
+        return ApiResponse::success('Current user retrieved successfully.',
+            new UserResource($request->user()->load('status'))->resolve($request)
+        );
     }
 
-    public function logout(Request $request): JsonResponse
+    public function logout(LogoutRequest $request): JsonResponse
     {
+        $deviceKey = $request->validated('fcm_device_key');
+        if (is_string($deviceKey) && $deviceKey !== '') {
+            $this->fcmTokens->revoke($request->user(), $deviceKey);
+        }
+
         $request->user()->currentAccessToken()->delete();
 
         return ApiResponse::success('Logout completed successfully.');

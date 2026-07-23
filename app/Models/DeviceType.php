@@ -18,15 +18,16 @@ use Illuminate\Support\Carbon;
 class DeviceType extends Model
 {
     public const string SMART_FARM_CONTROLLER = 'smart_farm_controller';
+
     public const int ID_SMART_FARM_CONTROLLER = 1;
 
     public const string CAMERA = 'camera';
+
     public const int ID_CAMERA = 2;
 
     public const string WATER_ENERGY_METER = 'water_energy_meter';
+
     public const int ID_WATER_ENERGY_METER = 3;
-
-
 
     /** @return array<string, mixed> */
     #[\Override]

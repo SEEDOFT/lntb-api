@@ -32,6 +32,4 @@ class UserFactory extends Factory
             'user_status_id' => UserStatus::ID_ACTIVE,
         ];
     }
-
-
 }

@@ -5,26 +5,32 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RevokeFcmTokenRequest;
+use App\Http\Requests\SyncFcmTokenRequest;
+use App\Services\FcmTokenService;
+use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 final class FcmTokenController extends Controller
 {
-    public function update(Request $request): JsonResponse
+    public function __construct(
+        private readonly FcmTokenService $tokens,
+    ) {}
+
+    public function update(SyncFcmTokenRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'fcm_token' => ['required', 'string', 'max:255'],
-        ]);
+        $this->tokens->syncFromPayload($request->user(), $request->validated());
 
-        $user = $request->user();
+        return ApiResponse::success('FCM token updated successfully.');
+    }
 
-        if ($user !== null) {
-            $user->forceFill(['fcm_token' => $validated['fcm_token']])->save();
-        }
+    public function destroy(RevokeFcmTokenRequest $request): JsonResponse
+    {
+        $this->tokens->revoke(
+            $request->user(),
+            $request->validated('fcm_device_key'),
+        );
 
-        return response()->json([
-            'message' => 'FCM token updated successfully.',
-        ]);
+        return ApiResponse::success('FCM token revoked successfully.');
     }
 }

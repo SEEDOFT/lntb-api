@@ -1,6 +1,9 @@
 <?php
 
 return [
+    'farm_assistant' => [
+        'endpoint' => env('FARM_ASSISTANT_ENDPOINT'),
+    ],
 
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),

@@ -18,15 +18,16 @@ use Illuminate\Support\Carbon;
 class DeviceControlStatus extends Model
 {
     public const string PENDING = 'pending';
+
     public const int ID_PENDING = 1;
 
     public const string COMPLETED = 'completed';
+
     public const int ID_COMPLETED = 2;
 
     public const string FAILED = 'failed';
+
     public const int ID_FAILED = 3;
-
-
 
     /** @return array<string, mixed> */
     #[\Override]

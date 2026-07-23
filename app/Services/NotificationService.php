@@ -4,81 +4,62 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Notification;
+use App\Models\NotificationStatus;
+use App\Models\NotificationType;
 use App\Models\User;
-use Illuminate\Support\Facades\Log;
-use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification;
-use Kreait\Laravel\Firebase\Facades\Firebase;
-use Throwable;
 
 final class NotificationService
 {
-    /**
-     * Send a push notification to a specific user.
-     *
-     * @param User $user
-     * @param string $title
-     * @param string $body
-     * @param array $data
-     * @return bool True if successful, false otherwise.
-     */
-    public function sendToUser(User $user, string $title, string $body, array $data = [], string $typeCode = \App\Models\NotificationType::SYSTEM): bool
+    public function unreadCount(int $userId): int
     {
-        $typeMap = [
-            \App\Models\NotificationType::WELCOME => \App\Models\NotificationType::ID_WELCOME,
-            \App\Models\NotificationType::SYSTEM => \App\Models\NotificationType::ID_SYSTEM,
-            \App\Models\NotificationType::ALERT => \App\Models\NotificationType::ID_ALERT,
-        ];
+        $unreadStatusId = NotificationStatus::query()
+            ->where('code', NotificationStatus::UNREAD)
+            ->valueOrFail('id');
 
-        $notification = \App\Models\Notification::create([
-            'user_id' => $user->id,
-            'notification_type_id' => $typeMap[$typeCode] ?? \App\Models\NotificationType::ID_SYSTEM,
-            'notification_status_id' => \App\Models\NotificationStatus::ID_UNREAD,
-            'title' => $title,
-            'body' => $body,
-            'data' => empty($data) ? null : $data,
-        ]);
-
-        if (empty($user->fcm_token)) {
-            return true; // Saved to DB, but no FCM token to push to.
-        }
-
-        return $this->sendToToken($user->fcm_token, $title, $body, $data);
+        return Notification::query()
+            ->where('user_id', $userId)
+            ->where('notification_status_id', $unreadStatusId)
+            ->count();
     }
 
     /**
-     * Send a push notification to a specific FCM token.
+     * Persist an in-app notification without coupling storage to delivery.
      *
-     * @param string $token
-     * @param string $title
-     * @param string $body
-     * @param array $data
-     * @return bool
+     * @param  array<string, string>  $data
      */
-    public function sendToToken(string $token, string $title, string $body, array $data = []): bool
-    {
-        try {
-            $messaging = Firebase::messaging();
+    public function store(
+        User $user,
+        string $typeCode,
+        string $title,
+        string $body,
+        array $data = [],
+        ?string $deduplicationKey = null,
+    ): Notification {
+        $typeId = NotificationType::query()
+            ->where('code', $typeCode)
+            ->valueOrFail('id');
+        $unreadStatusId = NotificationStatus::query()
+            ->where('code', NotificationStatus::UNREAD)
+            ->valueOrFail('id');
 
-            $notification = Notification::create($title, $body);
+        $attributes = [
+            'user_id' => $user->id,
+            'deduplication_key' => $deduplicationKey,
+            'notification_type_id' => $typeId,
+            'notification_status_id' => $unreadStatusId,
+            'title' => $title,
+            'body' => $body,
+            'data' => $data === [] ? null : $data,
+        ];
 
-            $message = CloudMessage::withTarget('token', $token)
-                ->withNotification($notification);
-
-            if (!empty($data)) {
-                $message = $message->withData($data);
-            }
-
-            $messaging->send($message);
-
-            return true;
-        } catch (Throwable $e) {
-            Log::error('Failed to send push notification: ' . $e->getMessage(), [
-                'token' => $token,
-                'title' => $title,
-                'exception' => $e
-            ]);
-            return false;
+        if ($deduplicationKey === null) {
+            return Notification::query()->create($attributes);
         }
+
+        return Notification::query()->firstOrCreate(
+            ['deduplication_key' => $deduplicationKey],
+            $attributes,
+        );
     }
 }
