@@ -12,6 +12,10 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 final class SendWelcomePushNotification implements ShouldQueue
 {
+    public function __construct(
+        private readonly NotificationService $notificationService
+    ) {}
+
     public function handle(Registered $event): void
     {
         $user = $event->user;
@@ -20,8 +24,7 @@ final class SendWelcomePushNotification implements ShouldQueue
             return;
         }
 
-        $notificationService = app(NotificationService::class);
-        $notificationService->sendToUser(
+        $this->notificationService->sendToUser(
             user: $user,
             title: 'Welcome to LNTB!',
             body: 'Your account has been successfully created. Enjoy the smart farming experience!',

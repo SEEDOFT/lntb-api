@@ -20,15 +20,16 @@ use Illuminate\Support\Carbon;
 class NotificationType extends Model
 {
     public const string WELCOME = 'welcome';
+
     public const int ID_WELCOME = 1;
 
     public const string SYSTEM = 'system';
+
     public const int ID_SYSTEM = 2;
 
     public const string ALERT = 'alert';
+
     public const int ID_ALERT = 3;
-
-
 
     /** @return array<string, mixed> */
     #[\Override]

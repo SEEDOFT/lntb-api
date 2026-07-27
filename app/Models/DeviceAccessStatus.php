@@ -18,12 +18,12 @@ use Illuminate\Support\Carbon;
 class DeviceAccessStatus extends Model
 {
     public const string ACTIVE = 'active';
+
     public const int ID_ACTIVE = 1;
 
     public const string REVOKED = 'revoked';
+
     public const int ID_REVOKED = 2;
-
-
 
     /** @return array<string, mixed> */
     #[\Override]

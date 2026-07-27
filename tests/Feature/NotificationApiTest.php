@@ -7,7 +7,6 @@ use App\Models\NotificationStatus;
 use App\Models\NotificationType;
 use App\Models\User;
 use App\Models\UserStatus;
-
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

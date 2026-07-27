@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Exceptions\BusinessException;
 use App\Models\User;
 use App\Models\UserStatus;
+use Exception;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -65,7 +66,7 @@ final class AuthService
             ]);
 
             if ($response->failed()) {
-                throw new \Exception('Failed to fetch user from Google tokeninfo.');
+                throw new Exception('Failed to fetch user from Google tokeninfo.');
             }
 
             $googleUser = $response->json();
@@ -76,13 +77,13 @@ final class AuthService
                 config('services.google.ios_client_id'),
             ];
 
-            if (! in_array($googleUser['aud'] ?? '', $allowedAudiences)) {
+            if (! \in_array($googleUser['aud'] ?? '', $allowedAudiences)) {
                 $receivedAud = $googleUser['aud'] ?? 'null';
-                throw new BusinessException('INVALID_GOOGLE_TOKEN', 'The Google token audience is invalid. Received: '.$receivedAud, 401);
+                throw new BusinessException('INVALID_GOOGLE_TOKEN', "The Google token audience is invalid. Received: .$receivedAud", 401);
             }
 
             if (! isset($googleUser['sub'])) {
-                throw new \Exception('Google user payload missing sub.');
+                throw new Exception('Google user payload missing sub.');
             }
 
             $googleId = (string) $googleUser['sub'];
@@ -125,8 +126,7 @@ final class AuthService
 
     public function ensureActive(User $user): void
     {
-        $activeId = UserStatus::ID_ACTIVE;
-        if ($user->user_status_id !== $activeId) {
+        if (! $user->isActive()) {
             throw new BusinessException('ACCOUNT_NOT_ACTIVE', 'The account is not active.', 403);
         }
     }

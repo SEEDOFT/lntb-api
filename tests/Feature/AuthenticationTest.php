@@ -100,6 +100,22 @@ it('fails login with wrong password', function (): void {
     $response->assertStatus(401);
 });
 
+it('fails login when user account is not active', function (): void {
+    $user = User::factory()->create([
+        'password' => Hash::make('Str0ng!Passw0rd'),
+        'user_status_id' => UserStatus::ID_SUSPENDED,
+    ]);
+
+    $response = $this->postJson('/api/v1/auth/login', [
+        'country_code' => $user->country_code,
+        'phone_number' => $user->phone_number,
+        'password' => 'Str0ng!Passw0rd',
+    ]);
+
+    $response->assertStatus(403)
+        ->assertJsonPath('status.message', 'The account is not active.');
+});
+
 it('retrieves current user', function (): void {
     $user = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $user->createToken('test')->plainTextToken;

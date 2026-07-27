@@ -6,6 +6,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,6 +14,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Laravel\Sanctum\HasApiTokens;
+use Override;
 
 /**
  * @property int $id
@@ -28,6 +30,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
+#[Table('users', key: 'id', keyType: 'int')]
 #[Fillable(['name', 'country_code', 'phone_number', 'google_id', 'password', 'user_status_id', 'fcm_token'])]
 #[Hidden(['password', 'google_id'])]
 class User extends Authenticatable
@@ -36,7 +39,7 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     /** @return array<string, mixed> */
-    #[\Override]
+    #[Override]
     protected function casts(): array
     {
         return [
@@ -63,5 +66,36 @@ class User extends Authenticatable
     public function sharedDeviceAccess(): HasMany
     {
         return $this->hasMany(DeviceUserAccess::class, 'user_id');
+    }
+
+    /**
+     * Scope a query to only include active users.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder<$this> $query
+     * @return \Illuminate\Database\Eloquent\Builder<$this>
+     */
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where('user_status_id', UserStatus::ID_ACTIVE);
+    }
+
+    /**
+     * Scope a query to filter by user status ID.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder<$this> $query
+     * @param int $statusId
+     * @return \Illuminate\Database\Eloquent\Builder<$this>
+     */
+    public function scopeStatus(\Illuminate\Database\Eloquent\Builder $query, int $statusId): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where('user_status_id', $statusId);
+    }
+
+    /**
+     * Check if the user account is active.
+     */
+    public function isActive(): bool
+    {
+        return $this->user_status_id === UserStatus::ID_ACTIVE;
     }
 }

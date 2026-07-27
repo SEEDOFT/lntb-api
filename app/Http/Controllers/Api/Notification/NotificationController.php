@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Notification;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\NotificationResource;
@@ -24,7 +24,7 @@ final class NotificationController extends Controller
             ->orderByDesc('created_at')
             ->paginate(20);
 
-        return ApiResponse::success('Notifications retrieved successfully.', NotificationResource::collection($page->getCollection())->resolve($request), meta: [
+        return ApiResponse::success('Notifications retrieved successfully.', NotificationResource::collection($page->getCollection()), meta: [
             'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
             'per_page' => $page->perPage(), 'total' => $page->total(),
         ]);
@@ -52,7 +52,7 @@ final class NotificationController extends Controller
 
         return ApiResponse::success(
             'Notification updated successfully.',
-            (new NotificationResource($notification->load(['type:id,code,name', 'status:id,code,name'])))->resolve($request)
+            NotificationResource::make($notification->load(['type:id,code,name', 'status:id,code,name']))
         );
     }
 }

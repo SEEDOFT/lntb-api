@@ -4,12 +4,20 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 final class ApiResponse
 {
     public static function success(string $message, mixed $data = null, int $status = 200, ?array $meta = null): JsonResponse
     {
+        if ($data instanceof JsonResource) {
+            $data = $data->resolve();
+        } elseif ($data instanceof Arrayable) {
+            $data = $data->toArray();
+        }
+
         $payload = [
             'status' => [
                 'code' => $status,
@@ -26,14 +34,13 @@ final class ApiResponse
         return response()->json($payload, $status);
     }
 
-    public static function error(string $message, string $code, int $status, ?array $errors = null): JsonResponse
+    public static function error(string $message, int $status = 500, ?array $errors = null): JsonResponse
     {
         $payload = [
             'status' => [
                 'code' => $status,
                 'success' => false,
                 'message' => $message,
-                'error_code' => $code, // Keeping the custom string code for client-side parsing
             ],
             'data' => $errors ?? (object) [],
         ];

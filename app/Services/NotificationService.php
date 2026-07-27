@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\NotificationStatus;
+use App\Models\NotificationType;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Messaging\CloudMessage;
@@ -16,24 +18,20 @@ final class NotificationService
     /**
      * Send a push notification to a specific user.
      *
-     * @param User $user
-     * @param string $title
-     * @param string $body
-     * @param array $data
      * @return bool True if successful, false otherwise.
      */
-    public function sendToUser(User $user, string $title, string $body, array $data = [], string $typeCode = \App\Models\NotificationType::SYSTEM): bool
+    public function sendToUser(User $user, string $title, string $body, array $data = [], string $typeCode = NotificationType::SYSTEM): bool
     {
         $typeMap = [
-            \App\Models\NotificationType::WELCOME => \App\Models\NotificationType::ID_WELCOME,
-            \App\Models\NotificationType::SYSTEM => \App\Models\NotificationType::ID_SYSTEM,
-            \App\Models\NotificationType::ALERT => \App\Models\NotificationType::ID_ALERT,
+            NotificationType::WELCOME => NotificationType::ID_WELCOME,
+            NotificationType::SYSTEM => NotificationType::ID_SYSTEM,
+            NotificationType::ALERT => NotificationType::ID_ALERT,
         ];
 
         $notification = \App\Models\Notification::create([
             'user_id' => $user->id,
-            'notification_type_id' => $typeMap[$typeCode] ?? \App\Models\NotificationType::ID_SYSTEM,
-            'notification_status_id' => \App\Models\NotificationStatus::ID_UNREAD,
+            'notification_type_id' => $typeMap[$typeCode] ?? NotificationType::ID_SYSTEM,
+            'notification_status_id' => NotificationStatus::ID_UNREAD,
             'title' => $title,
             'body' => $body,
             'data' => empty($data) ? null : $data,
@@ -48,12 +46,6 @@ final class NotificationService
 
     /**
      * Send a push notification to a specific FCM token.
-     *
-     * @param string $token
-     * @param string $title
-     * @param string $body
-     * @param array $data
-     * @return bool
      */
     public function sendToToken(string $token, string $title, string $body, array $data = []): bool
     {
@@ -65,7 +57,7 @@ final class NotificationService
             $message = CloudMessage::withTarget('token', $token)
                 ->withNotification($notification);
 
-            if (!empty($data)) {
+            if (! empty($data)) {
                 $message = $message->withData($data);
             }
 
@@ -73,11 +65,12 @@ final class NotificationService
 
             return true;
         } catch (Throwable $e) {
-            Log::error('Failed to send push notification: ' . $e->getMessage(), [
+            Log::error('Failed to send push notification: '.$e->getMessage(), [
                 'token' => $token,
                 'title' => $title,
-                'exception' => $e
+                'exception' => $e,
             ]);
+
             return false;
         }
     }

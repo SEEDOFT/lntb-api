@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api\Auth;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\GoogleLoginRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
@@ -27,7 +28,7 @@ final class AuthController extends Controller
             'token' => $result['token'],
             'token_type' => 'Bearer',
             'expires_at' => $result['expires_at'],
-            'user' => (new UserResource($result['user']->load('status')))->resolve($request),
+            'user' => new UserResource($result['user']->load('status')),
         ], 201);
     }
 
@@ -39,7 +40,7 @@ final class AuthController extends Controller
             'token' => $result['token'],
             'token_type' => 'Bearer',
             'expires_at' => $result['expires_at'],
-            'user' => (new UserResource($result['user']->load('status')))->resolve($request),
+            'user' => new UserResource($result['user']->load('status')),
         ]);
     }
 
@@ -51,13 +52,13 @@ final class AuthController extends Controller
             'token' => $result['token'],
             'token_type' => 'Bearer',
             'expires_at' => $result['expires_at'],
-            'user' => (new UserResource($result['user']->load('status')))->resolve($request),
+            'user' => new UserResource($result['user']->load('status')),
         ]);
     }
 
     public function me(Request $request): JsonResponse
     {
-        return ApiResponse::success('Current user retrieved successfully.', (new UserResource($request->user()->load('status')))->resolve($request));
+        return ApiResponse::success('Current user retrieved successfully.', new UserResource($request->user()->load('status')));
     }
 
     public function logout(Request $request): JsonResponse

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\Api\FcmTokenController;
-use App\Http\Controllers\Api\NotificationController;
-use App\Http\Controllers\DeviceAccessController;
-use App\Http\Controllers\DeviceControlController;
-use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\Api\Auth\FcmTokenController;
+use App\Http\Controllers\Api\Device\DeviceAccessController;
+use App\Http\Controllers\Api\Device\DeviceControlController;
+use App\Http\Controllers\Api\Device\DeviceController;
+use App\Http\Controllers\Api\Notification\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {

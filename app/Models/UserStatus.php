@@ -18,15 +18,16 @@ use Illuminate\Support\Carbon;
 class UserStatus extends Model
 {
     public const string ACTIVE = 'active';
+
     public const int ID_ACTIVE = 1;
 
     public const string SUSPENDED = 'suspended';
+
     public const int ID_SUSPENDED = 2;
 
     public const string CLOSED = 'closed';
+
     public const int ID_CLOSED = 3;
-
-
 
     /** @return array<string, mixed> */
     #[\Override]

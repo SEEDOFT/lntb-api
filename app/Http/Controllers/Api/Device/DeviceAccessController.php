@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api\Device;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\GrantDeviceUserRequest;
 use App\Http\Resources\DeviceAccessResource;
 use App\Models\Device;
@@ -22,7 +23,7 @@ final class DeviceAccessController extends Controller
         $this->authorize('manageAccess', $device);
         $items = $device->accessRecords()->with(['user.status', 'grantedBy.status', 'status'])->latest('granted_at')->get();
 
-        return ApiResponse::success('Device users retrieved successfully.', DeviceAccessResource::collection($items)->resolve($request));
+        return ApiResponse::success('Device users retrieved successfully.', DeviceAccessResource::collection($items));
     }
 
     public function store(GrantDeviceUserRequest $request, Device $device): JsonResponse
@@ -30,7 +31,7 @@ final class DeviceAccessController extends Controller
         $this->authorize('manageAccess', $device);
         $record = $this->access->grant($device, $request->user(), $request->validated('login'));
 
-        return ApiResponse::success('User access granted successfully.', (new DeviceAccessResource($record))->resolve($request), 201);
+        return ApiResponse::success('User access granted successfully.', DeviceAccessResource::make($record), 201);
     }
 
     public function destroy(Request $request, Device $device, DeviceUserAccess $access): JsonResponse
@@ -38,6 +39,6 @@ final class DeviceAccessController extends Controller
         $this->authorize('manageAccess', $device);
         $record = $this->access->revoke($device, $access, $request->user());
 
-        return ApiResponse::success('Shared access revoked successfully.', (new DeviceAccessResource($record))->resolve($request));
+        return ApiResponse::success('Shared access revoked successfully.', DeviceAccessResource::make($record));
     }
 }
