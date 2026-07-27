@@ -72,7 +72,7 @@ final class AuthController extends Controller
     public function logout(LogoutRequest $request): JsonResponse
     {
         $deviceKey = $request->validated('fcm_device_key');
-        if (is_string($deviceKey) && $deviceKey !== '') {
+        if (\is_string($deviceKey) && $deviceKey !== '') {
             $this->fcmTokens->revoke($request->user(), $deviceKey);
         }
 

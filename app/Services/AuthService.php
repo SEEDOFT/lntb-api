@@ -10,6 +10,7 @@ use App\Models\UserStatus;
 use Exception;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
@@ -34,6 +35,7 @@ final class AuthService
             ]);
 
             $this->fcmTokens->syncFromPayload($user, $data);
+
             event(new Registered($user));
 
             return $this->issueToken($user, $request, true);
@@ -155,7 +157,7 @@ final class AuthService
     private function issueToken(User $user, Request $request, bool $isNewAccount): array
     {
         $deviceName = $request->input('device_name', $request->input('platform', 'mobile'));
-        $expiresAt = now()->addDays(30);
+        $expiresAt = Carbon::now()->addDays(30);
         $token = $user->createToken($deviceName, ['*'], $expiresAt);
 
         return [

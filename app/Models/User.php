@@ -6,6 +6,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -80,22 +81,22 @@ class User extends Authenticatable
      * Scope a query to only include active users.
      *
      * @param  Builder<$this>  $query
-     * @return Builder<$this>
      */
-    public function scopeActive(Builder $query): Builder
+    #[Scope]
+    protected function active(Builder $query): void
     {
-        return $query->where('user_status_id', UserStatus::ID_ACTIVE);
+        $query->where('user_status_id', UserStatus::ID_ACTIVE);
     }
 
     /**
      * Scope a query to filter by user status ID.
      *
      * @param  Builder<$this>  $query
-     * @return Builder<$this>
      */
-    public function scopeStatus(Builder $query, int $statusId): Builder
+    #[Scope]
+    protected function hasStatus(Builder $query, int $statusId): void
     {
-        return $query->where('user_status_id', $statusId);
+        $query->where('user_status_id', $statusId);
     }
 
     /**

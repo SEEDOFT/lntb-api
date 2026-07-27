@@ -21,7 +21,10 @@ final class DeviceAccessController extends Controller
     public function index(Request $request, Device $device): JsonResponse
     {
         $this->authorize('manageAccess', $device);
-        $items = $device->accessRecords()->with(['user.status', 'grantedBy.status', 'status'])->latest('granted_at')->get();
+        $items = $device->accessRecords()
+            ->with(['user.status', 'grantedBy.status', 'status'])
+            ->latest('granted_at')
+            ->get();
 
         return ApiResponse::success('Device users retrieved successfully.', DeviceAccessResource::collection($items));
     }
