@@ -118,7 +118,7 @@ it('fails login when user account is not active', function (): void {
     ]);
 
     $response->assertStatus(403)
-        ->assertJsonPath('status.message', 'The account is not active.');
+        ->assertJsonPath('status.error_code', 'ACCOUNT_NOT_ACTIVE');
 });
 
 it('retrieves current user', function (): void {

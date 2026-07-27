@@ -34,13 +34,14 @@ final class ApiResponse
         return response()->json($payload, $status);
     }
 
-    public static function error(string $message, int $status = 500, ?array $errors = null): JsonResponse
+    public static function error(string $message, string $code, int $status, ?array $errors = null): JsonResponse
     {
         $payload = [
             'status' => [
                 'code' => $status,
                 'success' => false,
                 'message' => $message,
+                'error_code' => $code,
             ],
             'data' => $errors ?? (object) [],
         ];

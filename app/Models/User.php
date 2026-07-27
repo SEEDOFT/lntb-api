@@ -74,4 +74,35 @@ class User extends Authenticatable
     {
         return $this->hasMany(DeviceUserAccess::class, 'user_id');
     }
+
+    /**
+     * Scope a query to only include active users.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder<$this> $query
+     * @return \Illuminate\Database\Eloquent\Builder<$this>
+     */
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where('user_status_id', UserStatus::ID_ACTIVE);
+    }
+
+    /**
+     * Scope a query to filter by user status ID.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder<$this> $query
+     * @param int $statusId
+     * @return \Illuminate\Database\Eloquent\Builder<$this>
+     */
+    public function scopeStatus(\Illuminate\Database\Eloquent\Builder $query, int $statusId): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where('user_status_id', $statusId);
+    }
+
+    /**
+     * Check if the user account is active.
+     */
+    public function isActive(): bool
+    {
+        return $this->user_status_id === UserStatus::ID_ACTIVE;
+    }
 }
