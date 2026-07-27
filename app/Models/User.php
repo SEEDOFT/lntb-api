@@ -6,6 +6,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -78,10 +79,10 @@ class User extends Authenticatable
     /**
      * Scope a query to only include active users.
      *
-     * @param \Illuminate\Database\Eloquent\Builder<$this> $query
-     * @return \Illuminate\Database\Eloquent\Builder<$this>
+     * @param  Builder<$this>  $query
+     * @return Builder<$this>
      */
-    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('user_status_id', UserStatus::ID_ACTIVE);
     }
@@ -89,11 +90,10 @@ class User extends Authenticatable
     /**
      * Scope a query to filter by user status ID.
      *
-     * @param \Illuminate\Database\Eloquent\Builder<$this> $query
-     * @param int $statusId
-     * @return \Illuminate\Database\Eloquent\Builder<$this>
+     * @param  Builder<$this>  $query
+     * @return Builder<$this>
      */
-    public function scopeStatus(\Illuminate\Database\Eloquent\Builder $query, int $statusId): \Illuminate\Database\Eloquent\Builder
+    public function scopeStatus(Builder $query, int $statusId): Builder
     {
         return $query->where('user_status_id', $statusId);
     }

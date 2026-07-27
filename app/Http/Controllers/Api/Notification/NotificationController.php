@@ -33,7 +33,7 @@ final class NotificationController extends Controller
             ->orderByDesc('created_at')
             ->paginate(20);
 
-        return ApiResponse::success('Notifications retrieved successfully.', NotificationResource::collection($page->getCollection())->resolve($request), meta: [
+        return ApiResponse::success('Notifications retrieved successfully.', NotificationResource::collection($page->getCollection()), meta: [
             'current_page' => $page->currentPage(),
             'last_page' => $page->lastPage(),
             'per_page' => $page->perPage(),
@@ -62,7 +62,7 @@ final class NotificationController extends Controller
 
         return ApiResponse::success(
             'Notification updated successfully.',
-            (new NotificationResource($notification->load(['type:id,code,name', 'status:id,code,name'])))->resolve($request),
+            new NotificationResource($notification->load(['type:id,code,name', 'status:id,code,name'])),
             meta: [
                 'unread_count' => $this->notifications->unreadCount((int) $request->user()->id),
             ],

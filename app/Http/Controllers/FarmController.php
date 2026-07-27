@@ -123,6 +123,7 @@ final class FarmController extends Controller
     public function usage(Request $request, Farm $farm): JsonResponse
     {
         $this->authorizeFarm($request, $farm);
+
         return ApiResponse::success('Usage retrieved successfully.', DB::table('usage_records')->where('farm_id', $farm->id)->latest('recorded_on')->paginate(31)->items());
     }
 
@@ -150,6 +151,7 @@ final class FarmController extends Controller
             'image_url' => $row->image_path ? Storage::url($row->image_path) : null, 'model_version' => $row->model_version,
             'recommendation' => $row->recommendation, 'captured_at' => $row->captured_at,
         ]);
+
         return ApiResponse::success('Ripeness results retrieved successfully.', $rows);
     }
 
@@ -159,6 +161,7 @@ final class FarmController extends Controller
         $rows = DB::table('farm_logs as logs')->join('farm_log_types as types', 'types.id', '=', 'logs.farm_log_type_id')->where('logs.farm_id', $farm->id)->latest('recorded_at')->select('logs.*', 'types.code as type_code')->get()->map(fn ($row): array => [
             'id' => $row->id, 'type' => ['code' => $row->type_code], 'title' => $row->title, 'notes' => $row->notes, 'recorded_at' => $row->recorded_at,
         ]);
+
         return ApiResponse::success('Farm logs retrieved successfully.', $rows);
     }
 
@@ -167,12 +170,14 @@ final class FarmController extends Controller
         $this->authorizeFarm($request, $farm);
         $data = $request->validate(['type' => ['required', 'string'], 'title' => ['required', 'string', 'max:180'], 'notes' => ['nullable', 'string', 'max:5000']]);
         $id = DB::table('farm_logs')->insertGetId(['farm_id' => $farm->id, 'user_id' => $request->user()->id, 'farm_log_type_id' => $this->lookupId('farm_log_types', $data['type']), 'title' => $data['title'], 'notes' => $data['notes'] ?? null, 'recorded_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+
         return ApiResponse::success('Farm log created successfully.', ['id' => $id], 201);
     }
 
     public function harvests(Request $request, Farm $farm): JsonResponse
     {
         $this->authorizeFarm($request, $farm);
+
         return ApiResponse::success('Harvest records retrieved successfully.', DB::table('harvest_records')->where('farm_id', $farm->id)->latest('harvested_at')->get());
     }
 
@@ -181,6 +186,7 @@ final class FarmController extends Controller
         $this->authorizeFarm($request, $farm);
         $data = $request->validate(['quantity' => ['required', 'numeric', 'min:0.001'], 'unit' => ['required', 'in:kg,basket'], 'grade' => ['nullable', 'string', 'max:50'], 'damaged_quantity' => ['nullable', 'numeric', 'min:0']]);
         $id = DB::table('harvest_records')->insertGetId(['farm_id' => $farm->id, 'user_id' => $request->user()->id, ...$data, 'harvested_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+
         return ApiResponse::success('Harvest recorded successfully.', ['id' => $id], 201);
     }
 
@@ -198,6 +204,7 @@ final class FarmController extends Controller
         }
         $answer = (string) $response->json('answer', '');
         DB::table('assistant_messages')->insert(['farm_id' => $farm->id, 'user_id' => $request->user()->id, 'question' => $question, 'answer' => $answer, 'created_at' => now(), 'updated_at' => now()]);
+
         return ApiResponse::success('Assistant response generated.', ['answer' => $answer]);
     }
 
@@ -214,12 +221,14 @@ final class FarmController extends Controller
         if ($id === null) {
             throw new BusinessException('LOOKUP_NOT_FOUND', 'Required lookup configuration is missing.', 500);
         }
+
         return (int) $id;
     }
 
     private function farm(Farm $farm): array
     {
         $cycle = DB::table('crop_cycles')->where('farm_id', $farm->id)->where('crop_cycle_status_id', $this->lookupId('crop_cycle_statuses', 'active'))->latest('started_on')->first();
+
         return ['id' => $farm->id, 'name' => $farm->name, 'location' => $farm->location, 'status' => ['code' => $farm->status?->code ?? 'inactive'], 'current_crop_cycle' => $cycle ? ['id' => $cycle->id, 'crop_name' => $cycle->crop_name] : null];
     }
 }

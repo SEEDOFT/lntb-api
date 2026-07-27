@@ -2,11 +2,8 @@
 
 namespace App\Providers;
 
-use App\Listeners\SendWelcomePushNotification;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 

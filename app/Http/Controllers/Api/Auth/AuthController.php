@@ -31,7 +31,7 @@ final class AuthController extends Controller
             'token' => $result['token'],
             'token_type' => 'Bearer',
             'expires_at' => $result['expires_at'],
-            'user' => (new UserResource($result['user']->load('status')))->resolve($request),
+            'user' => new UserResource($result['user']->load('status')),
             'is_new_account' => $result['is_new_account'],
         ], 201);
     }
@@ -44,7 +44,7 @@ final class AuthController extends Controller
             'token' => $result['token'],
             'token_type' => 'Bearer',
             'expires_at' => $result['expires_at'],
-            'user' => (new UserResource($result['user']->load('status')))->resolve($request),
+            'user' => new UserResource($result['user']->load('status')),
             'is_new_account' => $result['is_new_account'],
         ]);
     }
@@ -57,7 +57,7 @@ final class AuthController extends Controller
             'token' => $result['token'],
             'token_type' => 'Bearer',
             'expires_at' => $result['expires_at'],
-            'user' => (new UserResource($result['user']->load('status')))->resolve($request),
+            'user' => new UserResource($result['user']->load('status')),
             'is_new_account' => $result['is_new_account'],
         ]);
     }
@@ -65,7 +65,7 @@ final class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         return ApiResponse::success('Current user retrieved successfully.',
-            new UserResource($request->user()->load('status'))->resolve($request)
+            new UserResource($request->user()->load('status'))
         );
     }
 

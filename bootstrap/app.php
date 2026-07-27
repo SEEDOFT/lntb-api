@@ -1,6 +1,7 @@
 <?php
 
 use App\Exceptions\BusinessException;
+use App\Http\Middleware\SetAppLocale;
 use App\Support\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -20,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(static function (Middleware $middleware): void {
-        $middleware->append(\App\Http\Middleware\SetAppLocale::class);
+        $middleware->append(SetAppLocale::class);
     })
     ->withExceptions(static function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(static fn (Request $request): bool => true);

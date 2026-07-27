@@ -50,7 +50,7 @@ final class DeviceControlController extends Controller
 
         return ApiResponse::success(
             'Control history retrieved successfully.',
-            DeviceControlResource::collection($page->getCollection())->resolve($request),
+            DeviceControlResource::collection($page->getCollection()),
             meta: [
                 'current_page' => $page->currentPage(),
                 'last_page' => $page->lastPage(),

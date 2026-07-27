@@ -57,9 +57,8 @@ final class NotificationService
             return Notification::query()->create($attributes);
         }
 
-        return Notification::query()->firstOrCreate(
-            ['deduplication_key' => $deduplicationKey],
-            $attributes,
-        );
+        return Notification::query()->firstOrCreate([
+            'deduplication_key' => $deduplicationKey,
+        ], $attributes);
     }
 }
