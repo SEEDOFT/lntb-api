@@ -388,3 +388,52 @@ it('returns 404 for non-existent device', function (): void {
 
     $this->getJson('/api/v1/devices/99999', authHeaders($token))->assertStatus(404);
 });
+
+// ─── DEVICE UPDATE ─────────────────────────────────────────────────
+
+it('updates device name and placement', function (): void {
+    $user = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
+    $token = $user->createToken('test')->plainTextToken;
+    $d = createDevice();
+    $this->postJson('/api/v1/devices/claim', [
+        'mac_address' => $d['device']->mac_address,
+        'claim_code' => $d['claim_code'],
+        'name' => 'Original',
+    ], authHeaders($token))->assertStatus(200);
+
+    $response = $this->patchJson('/api/v1/devices/'.$d['device']->id, [
+        'name' => 'Updated Device',
+        'placement' => 'Greenhouse A',
+    ], authHeaders($token));
+
+    $response->assertStatus(200);
+    expect($response->json('data.name'))->toBe('Updated Device');
+    expect($response->json('data.placement'))->toBe('Greenhouse A');
+});
+
+it('does not allow non-owner to update device', function (): void {
+    $owner = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
+    $ownerToken = $owner->createToken('test')->plainTextToken;
+    $d = createDevice();
+    $this->postJson('/api/v1/devices/claim', [
+        'mac_address' => $d['device']->mac_address,
+        'claim_code' => $d['claim_code'],
+    ], authHeaders($ownerToken))->assertStatus(200);
+
+    $other = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
+    $otherToken = $other->createToken('test')->plainTextToken;
+
+    $device = Device::query()->find($d['device']->id);
+    $this->assertEquals($owner->id, $device->owner_user_id, 'Owner not set on device');
+
+    $this->assertFalse($other->can('update', $device), 'Other user should not be able to update');
+
+    // Forget stale auth state from previous request
+    auth()->forgetGuards();
+
+    $response = $this->patchJson('/api/v1/devices/'.$d['device']->id, [
+        'name' => 'Hacked',
+    ], authHeaders($otherToken));
+
+    $response->assertStatus(403);
+});

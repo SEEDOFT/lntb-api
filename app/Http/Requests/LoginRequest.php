@@ -4,34 +4,29 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Support\IdentityNormalizer;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class LoginRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
+        // Accept a compound `login` field for convenience
         $login = trim((string) $this->input('login', ''));
 
-        if ($login !== '') {
-            if (str_contains($login, '@')) {
-                $this->merge(['email' => IdentityNormalizer::email($login)]);
-            } elseif (str_starts_with($login, '+855')) {
+        if ($login !== '' && ! str_contains($login, '@')) {
+            // Try to extract country_code from +XX prefix
+            if (preg_match('/^(\+\d{1,5})(\d{7,14})$/', $login, $m)) {
                 $this->merge([
-                    'country_code' => '+855',
-                    'phone_number' => IdentityNormalizer::phone(substr($login, 4)),
+                    'country_code' => $m[1],
+                    'phone_number' => $m[2],
                 ]);
             } else {
-                $this->merge(['phone_number' => IdentityNormalizer::phone($login)]);
+                $this->merge(['phone_number' => $login]);
             }
         }
 
         if (is_string($this->input('phone_number'))) {
-            $this->merge(['phone_number' => IdentityNormalizer::phone($this->input('phone_number'))]);
-        }
-
-        if (is_string($this->input('email'))) {
-            $this->merge(['email' => IdentityNormalizer::email($this->input('email'))]);
+            $this->merge(['phone_number' => preg_replace('/[^0-9]/', '', $this->input('phone_number'))]);
         }
     }
 
@@ -39,9 +34,8 @@ final class LoginRequest extends FormRequest
     {
         return [
             'login' => ['nullable', 'string', 'max:255'],
-            'country_code' => ['nullable', 'required_with:phone_number', 'string', 'max:5'],
-            'phone_number' => ['nullable', 'required_without:email', 'string', 'max:20'],
-            'email' => ['nullable', 'required_without:phone_number', 'email:rfc', 'max:255'],
+            'country_code' => ['required_without:login', 'string', 'max:5'],
+            'phone_number' => ['required_without:login', 'string', 'max:20'],
             'password' => ['required', 'string', 'max:255'],
             'fcm_token' => ['nullable', 'string', 'max:255'],
             'fcm_device_key' => ['nullable', 'required_with:fcm_token', 'string', 'max:128'],

@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\Device;
+use App\Policies\DevicePolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(Device::class, DevicePolicy::class);
         RateLimiter::for('auth', fn (Request $request) => Limit::perMinute(5)->by((string) $request->ip()));
         RateLimiter::for('claims', fn (Request $request) => Limit::perMinute(10)->by((string) $request->user()?->id));
         RateLimiter::for('users', fn (Request $request) => Limit::perMinute(10)->by((string) $request->user()?->id));

@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
  * @property int $device_status_id
  * @property int|null $owner_user_id
  * @property string|null $name
+ * @property string|null $placement
  * @property string $serial_number
  * @property string $mac_address
  * @property string $claim_code_hash
@@ -31,6 +32,7 @@ use Illuminate\Support\Carbon;
     'device_status_id',
     'owner_user_id',
     'name',
+    'placement',
     'serial_number',
     'mac_address',
     'claim_code_hash',
@@ -53,6 +55,7 @@ class Device extends Model
             'device_type_id' => 'integer',
             'device_status_id' => 'integer',
             'owner_user_id' => 'integer',
+            'placement' => 'string',
             'claim_code_used_at' => 'datetime',
             'claimed_at' => 'datetime',
             'last_seen_at' => 'datetime',

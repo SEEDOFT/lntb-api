@@ -27,9 +27,8 @@ final class AuthService
         return DB::transaction(function () use ($data, $request): array {
             $user = User::query()->create([
                 'name' => $data['name'],
-                'country_code' => $data['country_code'] ?? null,
-                'phone_number' => $data['phone_number'] ?? null,
-                'email' => $data['email'] ?? null,
+                'country_code' => $data['country_code'],
+                'phone_number' => $data['phone_number'],
                 'password' => $data['password'],
                 'user_status_id' => UserStatus::ID_ACTIVE,
             ]);
@@ -44,12 +43,10 @@ final class AuthService
 
     public function login(array $data, Request $request): array
     {
-        $user = isset($data['email'])
-            ? User::query()->where('email', $data['email'])->first()
-            : User::query()
-                ->where('country_code', $data['country_code'])
-                ->where('phone_number', $data['phone_number'])
-                ->first();
+        $user = User::query()
+            ->where('country_code', $data['country_code'])
+            ->where('phone_number', $data['phone_number'])
+            ->first();
 
         if ($user === null || $user->password === null || ! Hash::check($data['password'], $user->password)) {
             throw new BusinessException('INVALID_CREDENTIALS', 'The supplied credentials are invalid.', 401);

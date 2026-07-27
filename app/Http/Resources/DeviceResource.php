@@ -16,6 +16,7 @@ final class DeviceResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'placement' => $this->placement,
             'serial_number' => $this->serial_number,
             'mac_address' => $this->mac_address,
             'firmware_version' => $this->firmware_version,

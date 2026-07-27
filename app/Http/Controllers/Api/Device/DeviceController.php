@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\Device;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ClaimDeviceRequest;
+use App\Http\Requests\UpdateDeviceRequest;
 use App\Http\Resources\DeviceResource;
 use App\Models\Device;
 use App\Services\DeviceService;
@@ -34,5 +35,14 @@ final class DeviceController extends Controller
         $this->authorize('view', $device);
 
         return ApiResponse::success('Device retrieved successfully.', DeviceResource::make($device->load(['type', 'status'])));
+    }
+
+    public function update(UpdateDeviceRequest $request, Device $device): JsonResponse
+    {
+        $this->authorize('update', $device);
+
+        $device->update($request->validated());
+
+        return ApiResponse::success('Device updated successfully.', DeviceResource::make($device->load(['type', 'status'])));
     }
 }

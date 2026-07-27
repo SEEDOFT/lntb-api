@@ -28,6 +28,11 @@ final class DevicePolicy
         return $this->view($user, $device);
     }
 
+    public function update(User $user, Device $device): bool
+    {
+        return $this->isOwner($user, $device);
+    }
+
     public function viewHistory(User $user, Device $device): bool
     {
         return $this->view($user, $device);
