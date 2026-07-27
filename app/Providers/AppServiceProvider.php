@@ -25,11 +25,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Event::listen(
-            Registered::class,
-            SendWelcomePushNotification::class,
-        );
-
         RateLimiter::for('auth', fn (Request $request) => Limit::perMinute(5)->by((string) $request->ip()));
         RateLimiter::for('claims', fn (Request $request) => Limit::perMinute(10)->by((string) $request->user()?->id));
         RateLimiter::for('users', fn (Request $request) => Limit::perMinute(10)->by((string) $request->user()?->id));

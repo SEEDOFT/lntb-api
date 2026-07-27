@@ -13,6 +13,7 @@ final class GoogleLoginRequest extends FormRequest
         return [
             'token' => ['required', 'string'],
             'fcm_token' => ['nullable', 'string', 'max:255'],
+            'fcm_device_key' => ['nullable', 'required_with:fcm_token', 'string', 'max:128'],
             'device_name' => ['nullable', 'string', 'max:120'],
             'platform' => ['nullable', 'string', 'max:50'],
             'app_version' => ['nullable', 'string', 'max:30'],

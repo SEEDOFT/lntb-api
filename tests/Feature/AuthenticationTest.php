@@ -55,6 +55,11 @@ it('registers a new user', function (): void {
 
     $response->assertStatus(201)
         ->assertJsonStructure(['status' => ['message'], 'data' => ['token', 'token_type', 'expires_at', 'user']]);
+
+    $userId = (int) $response->json('data.user.id');
+    $this->assertDatabaseHas('notifications', [
+        'deduplication_key' => "welcome:user:{$userId}",
+    ]);
 });
 
 it('fails registration with weak password', function (): void {

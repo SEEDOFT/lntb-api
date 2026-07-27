@@ -35,7 +35,8 @@ test('user can list their active notifications', function () {
 
     $response->assertStatus(200)
         ->assertJsonPath('data.0.title', 'Test Notification')
-        ->assertJsonPath('data.0.status.code', NotificationStatus::UNREAD);
+        ->assertJsonPath('data.0.status.code', NotificationStatus::UNREAD)
+        ->assertJsonPath('meta.unread_count', 1);
 });
 
 test('user can mark notification as read', function () {
@@ -44,7 +45,8 @@ test('user can mark notification as read', function () {
     ]);
 
     $response->assertStatus(200)
-        ->assertJsonPath('data.status.code', NotificationStatus::READ);
+        ->assertJsonPath('data.status.code', NotificationStatus::READ)
+        ->assertJsonPath('meta.unread_count', 0);
 
     $this->assertDatabaseHas('notifications', [
         'id' => $this->notification->id,
@@ -57,7 +59,8 @@ test('user can mark notification as deleted and it is hidden from list', functio
         'status' => NotificationStatus::DELETED,
     ]);
 
-    $response->assertStatus(200);
+    $response->assertStatus(200)
+        ->assertJsonPath('meta.unread_count', 0);
 
     $listResponse = $this->actingAs($this->user)->getJson('/api/v1/notifications');
     $listResponse->assertStatus(200)->assertJsonCount(0, 'data');

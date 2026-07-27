@@ -1,0 +1,38 @@
+<?php
+
+return [
+    'accepted' => 'វាល :attribute ត្រូវតែទទួលយក។',
+    'active_url' => 'វាល :attribute មិនមែនជា URL ដែលត្រឹមត្រូវទេ។',
+    'after' => 'វាល :attribute ត្រូវតែជាកាលបរិច្ឆេទបន្ទាប់ពី :date។',
+    'alpha' => 'វាល :attribute អាចមានតែអក្សរប៉ុណ្ណោះ។',
+    'alpha_dash' => 'វាល :attribute អាចមានតែអក្សរ លេខ សញ្ញាដាច់ និងសញ្ញាក្បៀសប៉ុណ្ណោះ។',
+    'alpha_num' => 'វាល :attribute អាចមានតែអក្សរ និងលេខប៉ុណ្ណោះ។',
+    'array' => 'វាល :attribute ត្រូវតែជាអារេ។',
+    'before' => 'វាល :attribute ត្រូវតែជាកាលបរិច្ឆេទមុន :date។',
+    'confirmed' => 'ការបញ្ជាក់ :attribute មិនត្រូវគ្នានោះទេ។',
+    'date' => 'វាល :attribute មិនមែនជាកាលបរិច្ឆេទត្រឹមត្រូវទេ។',
+    'email' => 'វាល :attribute ត្រូវតែជាអាសយដ្ឋានអ៊ីមែលត្រឹមត្រូវ។',
+    'exists' => 'វាល :attribute ដែលបានជ្រើសរើសមិនត្រឹមត្រូវទេ។',
+    'filled' => 'វាល :attribute ត្រូវតែមានតម្លៃ។',
+    'image' => 'វាល :attribute ត្រូវតែជារូបភាព។',
+    'in' => 'វាល :attribute ដែលបានជ្រើសរើសមិនត្រឹមត្រូវទេ។',
+    'integer' => 'វាល :attribute ត្រូវតែជាចំនួនគត់។',
+    'max' => [
+        'numeric' => 'វាល :attribute មិនអាចធំជាង :max ទេ។',
+        'file' => 'វាល :attribute មិនអាចធំជាង :max កូឡូកបៃទេ។',
+        'string' => 'វាល :attribute មិនអាចមានលើសពី :max តួអក្សរទេ។',
+        'array' => 'វាល :attribute មិនអាចមានលើសពី :max ធាតុទេ។',
+    ],
+    'min' => [
+        'numeric' => 'វាល :attribute យ៉ាងហោចណាស់ត្រូវតែ :min។',
+        'file' => 'វាល :attribute យ៉ាងហោចណាស់ត្រូវតែ :min កូឡូកបៃ។',
+        'string' => 'វាល :attribute យ៉ាងហោចណាស់ត្រូវតែ :min តួអក្សរ។',
+        'array' => 'វាល :attribute យ៉ាងហោចណាស់ត្រូវតែមាន :min ធាតុ។',
+    ],
+    'numeric' => 'វាល :attribute ត្រូវតែជាលេខ។',
+    'required' => 'វាល :attribute ត្រូវតែបំពេញ។',
+    'same' => 'វាល :attribute និង :other ត្រូវតែដូចគ្នា។',
+    'string' => 'វាល :attribute ត្រូវតែជាអក្សរ។',
+    'unique' => 'វាល :attribute ត្រូវបានប្រើប្រាស់រួចហើយ។',
+    'url' => 'ទម្រង់វាល :attribute មិនត្រឹមត្រូវទេ។',
+];
