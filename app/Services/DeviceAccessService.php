@@ -9,6 +9,7 @@ use App\Models\Device;
 use App\Models\DeviceAccessStatus;
 use App\Models\DeviceUserAccess;
 use App\Models\User;
+use App\Models\UserStatus;
 use Illuminate\Support\Facades\DB;
 
 final class DeviceAccessService
@@ -19,7 +20,10 @@ final class DeviceAccessService
             Device::query()->lockForUpdate()->findOrFail($device->id);
 
             $field = str_contains($login, '@') ? 'email' : 'phone_number';
-            $grantee = User::query()->where($field, $login)->first();
+            $grantee = User::query()
+                ->where($field, $login)
+                ->whereHas('status', fn ($status) => $status->where('code', UserStatus::ACTIVE))
+                ->first();
             if ($grantee === null) {
                 throw new BusinessException('USER_NOT_FOUND', 'The registered user was not found.', 404);
             }
@@ -44,7 +48,7 @@ final class DeviceAccessService
 
             $values = [
                 'granted_by_user_id' => $owner->id,
-                'device_access_status_id' => DeviceAccessStatus::ID_ACTIVE,
+                'device_access_status_id' => $this->statusId(DeviceAccessStatus::ACTIVE),
                 'granted_at' => now(),
                 'revoked_at' => null,
             ];
@@ -79,7 +83,7 @@ final class DeviceAccessService
             }
 
             $locked->forceFill([
-                'device_access_status_id' => DeviceAccessStatus::ID_REVOKED,
+                'device_access_status_id' => $this->statusId(DeviceAccessStatus::REVOKED),
                 'revoked_at' => now(),
             ])->save();
 
@@ -100,5 +104,10 @@ final class DeviceAccessService
         if ($query->count() >= 5) {
             throw new BusinessException('DEVICE_ACCESS_LIMIT_REACHED', 'The device already has five active shared users.');
         }
+    }
+
+    private function statusId(string $code): int
+    {
+        return (int) DeviceAccessStatus::query()->where('code', $code)->valueOrFail('id');
     }
 }

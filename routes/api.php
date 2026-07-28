@@ -46,6 +46,7 @@ Route::prefix('v1')->group(function (): void {
 
         Route::get('devices', [DeviceController::class, 'index']);
         Route::post('devices/claim', [DeviceController::class, 'claim'])->middleware('throttle:claims');
+        Route::post('devices/controls/batch', [DeviceControlController::class, 'batch'])->middleware('throttle:controls');
         Route::get('devices/{device}', [DeviceController::class, 'show']);
         Route::patch('devices/{device}', [DeviceController::class, 'update']);
 

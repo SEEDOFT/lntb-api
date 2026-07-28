@@ -8,6 +8,14 @@ use Illuminate\Foundation\Http\FormRequest;
 
 final class UpdateDeviceRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'name' => is_string($this->input('name')) ? trim($this->input('name')) : $this->input('name'),
+            'placement' => is_string($this->input('placement')) ? trim($this->input('placement')) : $this->input('placement'),
+        ]);
+    }
+
     public function rules(): array
     {
         return [

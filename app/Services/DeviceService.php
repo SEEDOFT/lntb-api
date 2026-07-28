@@ -41,7 +41,7 @@ final class DeviceService
             if ($device->claim_code_used_at !== null) {
                 throw new BusinessException('CLAIM_CODE_ALREADY_USED', 'The claim code has already been used.');
             }
-            $availableId = DeviceStatus::ID_AVAILABLE;
+            $availableId = (int) DeviceStatus::query()->where('code', DeviceStatus::AVAILABLE)->valueOrFail('id');
             if ($device->device_status_id !== $availableId) {
                 throw new BusinessException('DEVICE_NOT_AVAILABLE', 'The device is not available.');
             }
@@ -50,7 +50,7 @@ final class DeviceService
             }
             $device->forceFill([
                 'owner_user_id' => $user->id,
-                'device_status_id' => DeviceStatus::ID_ACTIVE,
+                'device_status_id' => (int) DeviceStatus::query()->where('code', DeviceStatus::ACTIVE)->valueOrFail('id'),
                 'name' => $data['name'] ?? $device->name,
                 'claimed_at' => now(),
                 'claim_code_used_at' => now(),

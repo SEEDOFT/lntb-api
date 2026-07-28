@@ -20,9 +20,10 @@ final class DeviceUserAccessFactory extends Factory
         return [
             'device_id' => Device::factory(),
             'user_id' => User::factory(),
-            'invited_by_user_id' => User::factory(),
-            'device_access_status_id' => DeviceAccessStatus::query()->where('code', DeviceAccessStatus::INVITED)->value('id'),
-            'invited_at' => now(),
+            'granted_by_user_id' => User::factory(),
+            'device_access_status_id' => DeviceAccessStatus::query()->where('code', DeviceAccessStatus::ACTIVE)->value('id'),
+            'granted_at' => now(),
+            'revoked_at' => null,
         ];
     }
 }

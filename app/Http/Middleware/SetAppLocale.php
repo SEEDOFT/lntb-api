@@ -10,12 +10,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class SetAppLocale
 {
-    /**
-     * Supported locales in the application.
-     *
-     * @var array<string>
-     */
-    private const SUPPORTED_LOCALES = ['km', 'en'];
+    /** @var list<string> */
+    private const array SUPPORTED_LOCALES = ['km', 'en'];
 
     /**
      * Handle an incoming request.
@@ -32,7 +28,7 @@ final class SetAppLocale
             $primaryTag = strtolower(trim(explode(',', explode(';', $header)[0])[0]));
             $languageCode = explode('-', explode('_', $primaryTag)[0])[0];
 
-            if (in_array($languageCode, self::SUPPORTED_LOCALES, true)) {
+            if (\in_array($languageCode, self::SUPPORTED_LOCALES, true)) {
                 $locale = $languageCode;
             }
         }

@@ -30,19 +30,17 @@ final class ProvisionDevice extends Command
 
             $mac = MacAddress::normalize((string) $this->argument('mac'));
             $typeCode = (string) $this->option('type');
-            $typeMap = [
-                DeviceType::SMART_FARM_CONTROLLER => DeviceType::ID_SMART_FARM_CONTROLLER,
-                DeviceType::CAMERA => DeviceType::ID_CAMERA,
-                DeviceType::WATER_ENERGY_METER => DeviceType::ID_WATER_ENERGY_METER,
-            ];
-            $typeId = $typeMap[$typeCode] ?? null;
+            $typeId = DeviceType::query()->where('code', $typeCode)->value('id');
             if ($typeId === null) {
                 throw new \Exception("Invalid device type code: {$typeCode}");
             }
+            $availableStatusId = DeviceStatus::query()
+                ->where('code', DeviceStatus::AVAILABLE)
+                ->valueOrFail('id');
 
             $device = Device::query()->create([
                 'device_type_id' => $typeId,
-                'device_status_id' => DeviceStatus::ID_AVAILABLE,
+                'device_status_id' => $availableStatusId,
                 'serial_number' => (string) $this->argument('serial'),
                 'mac_address' => $mac,
                 'claim_code_hash' => Hash::make($claimCode),

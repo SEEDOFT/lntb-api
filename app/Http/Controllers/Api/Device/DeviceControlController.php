@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\Device;
 
 use App\Exceptions\BusinessException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CreateBatchDeviceControlRequest;
 use App\Http\Requests\CreateDeviceControlRequest;
 use App\Http\Resources\DeviceControlResource;
 use App\Models\Device;
@@ -66,6 +67,24 @@ final class DeviceControlController extends Controller
         $control = $this->controls->create($device, $request->user(), $request->validated());
 
         return ApiResponse::success('Control command created successfully.', DeviceControlResource::make($control), 201);
+    }
+
+    public function batch(CreateBatchDeviceControlRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $deviceIds = array_map('intval', $data['device_ids']);
+        $result = $this->controls->createBatch($request->user(), $deviceIds, [
+            'control_type' => $data['control_type'],
+            'control_data' => $data['control_data'] ?? null,
+        ]);
+        foreach ($result['results'] as &$item) {
+            if (($item['accepted'] ?? false) === true) {
+                $item['control'] = DeviceControlResource::make($item['control'])->resolve($request);
+            }
+        }
+        unset($item);
+
+        return ApiResponse::success('Batch control command processed.', $result);
     }
 
     public function show(Request $request, Device $device, DeviceControl $control): JsonResponse

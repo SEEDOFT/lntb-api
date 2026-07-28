@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\GrantDeviceUserRequest;
 use App\Http\Resources\DeviceAccessResource;
 use App\Models\Device;
+use App\Models\DeviceAccessStatus;
 use App\Models\DeviceUserAccess;
 use App\Services\DeviceAccessService;
 use App\Support\ApiResponse;
@@ -23,6 +24,7 @@ final class DeviceAccessController extends Controller
         $this->authorize('manageAccess', $device);
         $items = $device->accessRecords()
             ->with(['user.status', 'grantedBy.status', 'status'])
+            ->whereHas('status', fn ($status) => $status->where('code', DeviceAccessStatus::ACTIVE))
             ->latest('granted_at')
             ->get();
 
