@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Override;
 
 /**
  * @property int $id
@@ -27,6 +29,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
+#[Table('devices', key: 'id', keyType: 'int')]
 #[Fillable([
     'device_type_id',
     'device_status_id',
@@ -47,7 +50,7 @@ class Device extends Model
     use HasFactory;
 
     /** @return array<string, mixed> */
-    #[\Override]
+    #[Override]
     protected function casts(): array
     {
         return [

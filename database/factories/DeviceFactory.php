@@ -7,14 +7,14 @@ namespace Database\Factories;
 use App\Models\Device;
 use App\Models\DeviceStatus;
 use App\Models\DeviceType;
+use Illuminate\Database\Eloquent\Factories\Attributes\UseModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 
 /** @extends Factory<Device> */
+#[UseModel(Device::class)]
 final class DeviceFactory extends Factory
 {
-    protected $model = Device::class;
-
     public function definition(): array
     {
         return [

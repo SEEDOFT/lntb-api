@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Override;
 
 /**
  * @property int $id
@@ -30,6 +32,7 @@ use Illuminate\Support\Carbon;
  * @property-read NotificationStatus $status
  * @property-read Collection<int, NotificationPushDelivery> $pushDeliveries
  */
+#[Table('notifications', key: 'id', keyType: 'int')]
 #[Fillable([
     'user_id',
     'deduplication_key',
@@ -44,8 +47,8 @@ use Illuminate\Support\Carbon;
 ])]
 class Notification extends Model
 {
-    /** @return array<string, mixed> */
-    #[\Override]
+    /** @return array<string, string> */
+    #[Override]
     protected function casts(): array
     {
         return [

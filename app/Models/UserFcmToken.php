@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Override;
 
 /**
  * @property int $id
@@ -23,6 +25,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $revoked_at
  * @property-read User $user
  */
+#[Table('user_fcm_tokens', key: 'id', keyType: 'int')]
 #[Fillable([
     'user_id',
     'device_key',
@@ -37,8 +40,8 @@ final class UserFcmToken extends Model
 {
     use Notifiable;
 
-    /** @return array<string, mixed> */
-    #[\Override]
+    /** @return array<string, string> */
+    #[Override]
     protected function casts(): array
     {
         return [

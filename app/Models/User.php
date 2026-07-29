@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,6 +17,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Laravel\Sanctum\HasApiTokens;
+use Override;
 
 /**
  * @property int $id
@@ -33,7 +35,17 @@ use Laravel\Sanctum\HasApiTokens;
  * @property Carbon|null $updated_at
  * @property-read Collection<int, UserFcmToken> $fcmTokens
  */
-#[Fillable(['name', 'country_code', 'phone_number', 'email', 'google_id', 'password', 'user_status_id', 'email_verified_at'])]
+#[Table('users', key: 'id', keyType: 'int')]
+#[Fillable([
+    'name',
+    'country_code',
+    'phone_number',
+    'email',
+    'google_id',
+    'password',
+    'user_status_id',
+    'email_verified_at',
+])]
 #[Hidden(['password', 'google_id'])]
 class User extends Authenticatable
 {
@@ -46,8 +58,8 @@ class User extends Authenticatable
         return $this->hasMany(UserFcmToken::class);
     }
 
-    /** @return array<string, mixed> */
-    #[\Override]
+    /** @return array<string, string> */
+    #[Override]
     protected function casts(): array
     {
         return [

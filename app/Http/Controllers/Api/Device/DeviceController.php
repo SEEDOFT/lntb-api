@@ -20,7 +20,9 @@ final class DeviceController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        return ApiResponse::success('Devices retrieved successfully.', DeviceResource::collection($this->devices->accessible($request->user())));
+        return ApiResponse::success('Devices retrieved successfully.',
+            DeviceResource::collection($this->devices->accessible($request->user()))
+        );
     }
 
     public function claim(ClaimDeviceRequest $request): JsonResponse
@@ -34,7 +36,9 @@ final class DeviceController extends Controller
     {
         $this->authorize('view', $device);
 
-        return ApiResponse::success('Device retrieved successfully.', DeviceResource::make($device->load(['type', 'status'])));
+        return ApiResponse::success('Device retrieved successfully.',
+            DeviceResource::make($device->load(['type', 'status']))
+        );
     }
 
     public function update(UpdateDeviceRequest $request, Device $device): JsonResponse
@@ -43,6 +47,8 @@ final class DeviceController extends Controller
 
         $device->update($request->validated());
 
-        return ApiResponse::success('Device updated successfully.', DeviceResource::make($device->load(['type', 'status'])));
+        return ApiResponse::success('Device updated successfully.',
+            DeviceResource::make($device->load(['type', 'status']))
+        );
     }
 }

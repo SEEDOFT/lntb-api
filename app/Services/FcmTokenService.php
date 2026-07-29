@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Notification;
 use App\Models\User;
 use App\Models\UserFcmToken;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 final class FcmTokenService
@@ -56,12 +57,13 @@ final class FcmTokenService
                 ->where('device_key', '!=', $deviceKey)
                 ->update([
                     'fcm_token' => null,
-                    'revoked_at' => now(),
+                    'revoked_at' => Carbon::now(),
                 ]);
 
             $registration = UserFcmToken::query()
                 ->lockForUpdate()
                 ->firstOrNew(['device_key' => $deviceKey]);
+
             $tokenChanged = $registration->fcm_token !== $fcmToken;
 
             $registration->forceFill([
@@ -70,13 +72,14 @@ final class FcmTokenService
                 'platform' => $platform,
                 'device_name' => $deviceName,
                 'app_version' => $appVersion,
-                'last_used_at' => now(),
+                'last_used_at' => Carbon::now(),
                 'revoked_at' => null,
             ])->save();
 
             return [$registration, $tokenChanged];
         });
 
+        /** @var Notification|null $welcome */
         $welcome = Notification::query()
             ->where('user_id', $user->id)
             ->where('deduplication_key', "welcome:user:{$user->id}")
@@ -97,7 +100,7 @@ final class FcmTokenService
             ->where('device_key', $deviceKey)
             ->update([
                 'fcm_token' => null,
-                'revoked_at' => now(),
+                'revoked_at' => Carbon::now(),
             ]);
     }
 }

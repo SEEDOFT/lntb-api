@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Override;
 
 /**
  * @property int $id
@@ -20,6 +22,7 @@ use Illuminate\Support\Carbon;
  * @property-read Notification $notification
  * @property-read UserFcmToken $fcmToken
  */
+#[Table('notification_push_deliveries', key: 'id', keyType: 'int')]
 #[Fillable([
     'notification_id',
     'user_fcm_token_id',
@@ -30,8 +33,8 @@ use Illuminate\Support\Carbon;
 ])]
 final class NotificationPushDelivery extends Model
 {
-    /** @return array<string, mixed> */
-    #[\Override]
+    /** @return array<string, string> */
+    #[Override]
     protected function casts(): array
     {
         return [

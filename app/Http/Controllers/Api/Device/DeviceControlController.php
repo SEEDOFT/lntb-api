@@ -27,10 +27,12 @@ final class DeviceControlController extends Controller
         $perPage = min(max((int) $request->integer('per_page', 20), 1), 100);
         $page = $device->controls()->with(['user.status', 'status'])->latest('requested_at')->paginate($perPage);
 
-        return ApiResponse::success('Control history retrieved successfully.', DeviceControlResource::collection($page->getCollection()), meta: [
-            'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
-            'per_page' => $page->perPage(), 'total' => $page->total(),
-        ]);
+        return ApiResponse::success('Control history retrieved successfully.',
+            data: DeviceControlResource::collection($page->getCollection()), meta: [
+                'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
+                'per_page' => $page->perPage(), 'total' => $page->total(),
+            ]
+        );
     }
 
     public function all(Request $request): JsonResponse

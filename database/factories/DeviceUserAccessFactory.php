@@ -8,13 +8,13 @@ use App\Models\Device;
 use App\Models\DeviceAccessStatus;
 use App\Models\DeviceUserAccess;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\Attributes\UseModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /** @extends Factory<DeviceUserAccess> */
+#[UseModel(DeviceUserAccess::class)]
 final class DeviceUserAccessFactory extends Factory
 {
-    protected $model = DeviceUserAccess::class;
-
     public function definition(): array
     {
         return [

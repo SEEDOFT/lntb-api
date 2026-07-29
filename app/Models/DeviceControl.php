@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Override;
 
 /**
  * @property int $id
@@ -21,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
+#[Table('device_controls', key: 'id', keyType: 'int')]
 #[Fillable([
     'device_id',
     'user_id',
@@ -35,8 +38,8 @@ class DeviceControl extends Model
 {
     use HasFactory;
 
-    /** @return array<string, mixed> */
-    #[\Override]
+    /** @return array<string, string> */
+    #[Override]
     protected function casts(): array
     {
         return [
