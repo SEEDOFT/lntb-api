@@ -419,11 +419,35 @@ it('updates device name and placement', function (): void {
     $response = $this->patchJson('/api/v1/devices/'.$d['device']->id, [
         'name' => 'Updated Device',
         'placement' => 'Greenhouse A',
+        'rated_power_watts' => 85,
     ], authHeaders($token));
 
     $response->assertStatus(200);
     expect($response->json('data.name'))->toBe('Updated Device');
     expect($response->json('data.placement'))->toBe('Greenhouse A');
+    expect($response->json('data.rated_power_watts'))->toBe(85);
+});
+
+it('rejects invalid rated_power_watts on device update', function (): void {
+    $user = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
+    $token = $user->createToken('test')->plainTextToken;
+    $d = createDevice();
+    $activation = prepareActivation($d['device'], $user);
+    $this->postJson('/api/v1/devices/claim', [
+        'device_ref' => $activation['device_ref'],
+        'activation_token' => $activation['activation_token'],
+    ], authHeaders($token))->assertStatus(200);
+
+    $this->patchJson('/api/v1/devices/'.$d['device']->id, [
+        'rated_power_watts' => 0,
+    ], authHeaders($token))->assertStatus(422);
+
+    $this->patchJson('/api/v1/devices/'.$d['device']->id, [
+        'rated_power_watts' => 'many',
+    ], authHeaders($token))->assertStatus(422);
+
+    $device = Device::query()->find($d['device']->id);
+    expect($device->rated_power_watts)->toBeNull();
 });
 
 it('does not allow non-owner to update device', function (): void {

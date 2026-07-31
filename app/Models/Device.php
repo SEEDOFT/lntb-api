@@ -23,6 +23,7 @@ use Override;
  * @property string $mac_address
  * @property string $claim_code_hash
  * @property string|null $firmware_version
+ * @property int|null $rated_power_watts
  * @property Carbon|null $claim_code_used_at
  * @property Carbon|null $claimed_at
  * @property Carbon|null $last_seen_at
@@ -40,6 +41,7 @@ use Override;
     'mac_address',
     'claim_code_hash',
     'firmware_version',
+    'rated_power_watts',
     'claim_code_used_at',
     'claimed_at',
     'last_seen_at',
@@ -59,6 +61,7 @@ class Device extends Model
             'device_status_id' => 'integer',
             'owner_user_id' => 'integer',
             'placement' => 'string',
+            'rated_power_watts' => 'integer',
             'claim_code_used_at' => 'datetime',
             'claimed_at' => 'datetime',
             'last_seen_at' => 'datetime',

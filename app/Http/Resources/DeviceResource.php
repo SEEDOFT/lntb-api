@@ -20,6 +20,7 @@ final class DeviceResource extends JsonResource
             'serial_number' => $this->serial_number,
             'mac_address' => $this->mac_address,
             'firmware_version' => $this->firmware_version,
+            'rated_power_watts' => $this->rated_power_watts,
             'type' => $this->whenLoaded('type', fn () => ['code' => $this->type->code, 'name' => $this->type->name]),
             'status' => $this->whenLoaded('status', fn () => ['code' => $this->status->code, 'name' => $this->status->name]),
             'access_role' => $role,

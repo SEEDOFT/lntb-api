@@ -13,7 +13,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Throwable;
 
-#[Signature('device:provision {serial} {mac} {--type=fan} {--name=} {--firmware=}')]
+#[Signature('device:provision {serial} {mac} {--type=fan} {--name=} {--firmware=} {--power=}')]
 #[Description('Provision an unowned device for later seller-assisted activation')]
 final class ProvisionDevice extends Command
 {
@@ -30,6 +30,11 @@ final class ProvisionDevice extends Command
                 ->where('code', DeviceStatus::AVAILABLE)
                 ->valueOrFail('id');
 
+            $power = $this->option('power');
+            if ($power !== null && ((int) $power) < 1) {
+                throw new \Exception('Power rating must be at least 1 watt.');
+            }
+
             $device = Device::query()->create([
                 'device_type_id' => $typeId,
                 'device_status_id' => $availableStatusId,
@@ -38,6 +43,7 @@ final class ProvisionDevice extends Command
                 'claim_code_hash' => hash('sha256', random_bytes(32)),
                 'name' => $this->option('name') ?: null,
                 'firmware_version' => $this->option('firmware') ?: null,
+                'rated_power_watts' => $power !== null ? (int) $power : null,
             ]);
         } catch (Throwable $exception) {
             $this->error($exception->getMessage());

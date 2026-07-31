@@ -116,6 +116,7 @@ final class TestDataSeeder
                     'mac_address' => $definition['mac'],
                     'claim_code_hash' => hash('sha256', $serial),
                     'firmware_version' => $definition['firmware'],
+                    'rated_power_watts' => $definition['power_watts'],
                     'claim_code_used_at' => now()->subDays(14),
                     'claimed_at' => now()->subDays(14),
                     'last_seen_at' => now()->subMinutes($definition['last_seen_minutes']),
@@ -294,7 +295,7 @@ final class TestDataSeeder
         ]);
     }
 
-    /** @return array<string, array{name: string, type: string, mac: string, firmware: string, last_seen_minutes: int}> */
+    /** @return array<string, array{name: string, type: string, mac: string, firmware: string, last_seen_minutes: int, power_watts: int}> */
     private function deviceDefinitions(): array
     {
         return [
@@ -304,6 +305,7 @@ final class TestDataSeeder
                 'mac' => '02:00:00:00:10:01',
                 'firmware' => '1.4.2',
                 'last_seen_minutes' => 2,
+                'power_watts' => 85,
             ],
             'LNTB-TEST-ROOF-0001' => [
                 'name' => 'Roof Actuator',
@@ -311,6 +313,7 @@ final class TestDataSeeder
                 'mac' => '02:00:00:00:10:02',
                 'firmware' => '2.1.0',
                 'last_seen_minutes' => 4,
+                'power_watts' => 60,
             ],
             'LNTB-TEST-CAM-0001' => [
                 'name' => 'Surveillance Camera',
@@ -318,6 +321,7 @@ final class TestDataSeeder
                 'mac' => '02:00:00:00:10:03',
                 'firmware' => '2.1.0',
                 'last_seen_minutes' => 5,
+                'power_watts' => 12,
             ],
             'LNTB-TEST-METER-0001' => [
                 'name' => 'Water Meter',
@@ -325,6 +329,7 @@ final class TestDataSeeder
                 'mac' => '02:00:00:00:10:04',
                 'firmware' => '1.2.5',
                 'last_seen_minutes' => 3,
+                'power_watts' => 750,
             ],
         ];
     }

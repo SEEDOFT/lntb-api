@@ -21,6 +21,7 @@ final class UpdateDeviceRequest extends FormRequest
         return [
             'name' => ['nullable', 'string', 'max:120'],
             'placement' => ['nullable', 'string', 'max:100'],
+            'rated_power_watts' => ['nullable', 'integer', 'min:1', 'max:100000'],
         ];
     }
 }
