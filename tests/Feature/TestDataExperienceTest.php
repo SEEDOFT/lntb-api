@@ -82,6 +82,7 @@ it('returns the seeded dashboard through authenticated APIs', function (): void 
         ->assertJsonCount(1, 'data.warnings')
         ->assertJsonPath('data.usage.water_cubic_meters', 0.42)
         ->assertJsonPath('data.assistant.question', 'What should I check today?')
+        ->assertJsonPath('data.assistant.answer', 'សំណើមក្នុងផ្ទះកញ្ចក់ A ខ្ពស់បន្តិច។ សូមពិនិត្យលំហូរខ្យល់ និងរក្សាកាលវិភាគកង្ហារឱ្យដំណើរការមុនកំដៅពេលរសៀល។')
         ->assertJsonPath('data.online_device_count', 4)
         ->assertJsonMissing(['demo'])
         ->assertJsonMissing(['prototype']);

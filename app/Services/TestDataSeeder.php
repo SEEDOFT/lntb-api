@@ -248,7 +248,7 @@ final class TestDataSeeder
             'farm_id' => $farmId,
             'user_id' => $user->id,
             'question' => 'What should I check today?',
-            'answer' => 'Humidity is slightly high in Greenhouse A. Check airflow and keep the fan schedule active before the afternoon heat.',
+            'answer' => 'សំណើមក្នុងផ្ទះកញ្ចក់ A ខ្ពស់បន្តិច។ សូមពិនិត្យលំហូរខ្យល់ និងរក្សាកាលវិភាគកង្ហារឱ្យដំណើរការមុនកំដៅពេលរសៀល។',
             'created_at' => now()->subMinutes(30),
             'updated_at' => now()->subMinutes(30),
         ]);
