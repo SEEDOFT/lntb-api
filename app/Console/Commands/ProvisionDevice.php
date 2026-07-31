@@ -8,15 +8,15 @@ use App\Models\Device;
 use App\Models\DeviceStatus;
 use App\Models\DeviceType;
 use App\Support\MacAddress;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Throwable;
 
+#[Signature('device:provision {serial} {mac} {--type=fan} {--name=} {--firmware=}')]
+#[Description('Provision an unowned device for later seller-assisted activation')]
 final class ProvisionDevice extends Command
 {
-    protected $signature = 'device:provision {serial} {mac} {--type=fan} {--name=} {--firmware=}';
-
-    protected $description = 'Provision an unowned device for later seller-assisted activation';
-
     public function handle(): int
     {
         try {

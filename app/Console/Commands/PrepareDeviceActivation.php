@@ -7,19 +7,19 @@ namespace App\Console\Commands;
 use App\Services\DeviceActivationService;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Throwable;
 
+#[Signature('device:prepare-activation
+    {serial : Provisioned device serial number}
+    {customer_login : Registered customer email or phone}
+    {--operator= : Seller operator identifier for the audit trail}')]
+#[Description('Bind an available device to a customer and create its one-time activation QR')]
 final class PrepareDeviceActivation extends Command
 {
-    protected $signature = 'device:prepare-activation
-        {serial : Provisioned device serial number}
-        {customer_login : Registered customer email or phone}
-        {--operator= : Seller operator identifier for the audit trail}';
-
-    protected $description = 'Bind an available device to a customer and create its one-time activation QR';
-
     public function handle(DeviceActivationService $activations): int
     {
         $operator = trim((string) $this->option('operator'));
