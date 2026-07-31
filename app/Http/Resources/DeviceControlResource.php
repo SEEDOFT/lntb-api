@@ -18,6 +18,10 @@ final class DeviceControlResource extends JsonResource
                 'id' => $this->device->id,
                 'name' => $this->device->name,
                 'mac_address' => $this->device->mac_address,
+                'type' => $this->device->relationLoaded('type') ? [
+                    'code' => $this->device->type?->code,
+                    'name' => $this->device->type?->name,
+                ] : null,
             ]),
             'requested_by' => new UserResource($this->whenLoaded('user')),
             'status' => $this->whenLoaded('status', fn () => ['code' => $this->status->code, 'name' => $this->status->name]),

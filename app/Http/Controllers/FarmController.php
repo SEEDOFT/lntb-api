@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\BusinessException;
 use App\Models\Farm;
+use App\Services\FarmDashboardService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\Storage;
 
 final class FarmController extends Controller
 {
+    public function __construct(private readonly FarmDashboardService $dashboards) {}
+
     public function index(Request $request): JsonResponse
     {
         $farms = Farm::query()
@@ -22,7 +25,7 @@ final class FarmController extends Controller
             ->with('status')
             ->orderBy('name')
             ->get()
-            ->map(fn (Farm $farm): array => $this->farm($farm));
+            ->map(fn (Farm $farm): array => $this->dashboards->farm($farm));
 
         return ApiResponse::success('Farms retrieved successfully.', $farms);
     }
@@ -31,32 +34,17 @@ final class FarmController extends Controller
     {
         $this->authorizeFarm($request, $farm);
 
-        return ApiResponse::success('Farm retrieved successfully.', $this->farm($farm->load('status')));
+        return ApiResponse::success('Farm retrieved successfully.', $this->dashboards->farm($farm->load('status')));
     }
 
     public function dashboard(Request $request, Farm $farm): JsonResponse
     {
         $this->authorizeFarm($request, $farm);
-        $metrics = DB::table('sensor_readings as readings')
-            ->join('sensor_types as types', 'types.id', '=', 'readings.sensor_type_id')
-            ->where('readings.farm_id', $farm->id)
-            ->whereIn('readings.id', DB::table('sensor_readings')->selectRaw('MAX(id)')->where('farm_id', $farm->id)->groupBy('sensor_type_id'))
-            ->get()
-            ->map(fn ($row): array => [
-                'code' => $row->code,
-                'value' => (float) $row->value,
-                'unit' => $row->unit,
-                'status' => $row->status_code,
-                'recorded_at' => $row->recorded_at,
-            ]);
 
-        return ApiResponse::success('Farm dashboard retrieved successfully.', [
-            'farm' => $this->farm($farm->load('status')),
-            'metrics' => $metrics,
-            'open_task_count' => DB::table('farm_tasks')->where('farm_id', $farm->id)->where('task_status_id', $this->lookupId('task_statuses', 'open'))->count(),
-            'online_device_count' => DB::table('farm_devices')->where('farm_id', $farm->id)->count(),
-            'latest_alert' => null,
-        ]);
+        return ApiResponse::success(
+            'Farm dashboard retrieved successfully.',
+            $this->dashboards->dashboard($farm->load('status'), $request->user()),
+        );
     }
 
     public function tasks(Request $request, Farm $farm): JsonResponse
@@ -223,12 +211,5 @@ final class FarmController extends Controller
         }
 
         return (int) $id;
-    }
-
-    private function farm(Farm $farm): array
-    {
-        $cycle = DB::table('crop_cycles')->where('farm_id', $farm->id)->where('crop_cycle_status_id', $this->lookupId('crop_cycle_statuses', 'active'))->latest('started_on')->first();
-
-        return ['id' => $farm->id, 'name' => $farm->name, 'location' => $farm->location, 'status' => ['code' => $farm->status?->code ?? 'inactive'], 'current_crop_cycle' => $cycle ? ['id' => $cycle->id, 'crop_name' => $cycle->crop_name] : null];
     }
 }

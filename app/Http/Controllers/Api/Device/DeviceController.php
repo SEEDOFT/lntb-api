@@ -9,6 +9,7 @@ use App\Http\Requests\ClaimDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Http\Resources\DeviceResource;
 use App\Models\Device;
+use App\Services\DeviceActivationService;
 use App\Services\DeviceService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +17,10 @@ use Illuminate\Http\Request;
 
 final class DeviceController extends Controller
 {
-    public function __construct(private readonly DeviceService $devices) {}
+    public function __construct(
+        private readonly DeviceService $devices,
+        private readonly DeviceActivationService $activations,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -27,7 +31,7 @@ final class DeviceController extends Controller
 
     public function claim(ClaimDeviceRequest $request): JsonResponse
     {
-        $device = $this->devices->claim($request->user(), $request->validated());
+        $device = $this->activations->activate($request->user(), $request->validated());
 
         return ApiResponse::success('Device claimed successfully.', DeviceResource::make($device));
     }

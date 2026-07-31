@@ -11,6 +11,7 @@ use App\Models\DeviceType;
 use App\Models\DeviceUserAccess;
 use App\Models\User;
 use App\Models\UserStatus;
+use App\Services\DeviceActivationService;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use Illuminate\Console\Command;
@@ -26,15 +27,13 @@ final class SetupPhaseOneDemo extends Command
 
     private const string MAC = '02:00:00:00:00:01';
 
-    private const string CLAIM_CODE = 'LNTB-DEMO-2026';
-
     private const string PASSWORD = 'LntbDemo123!';
 
     protected $signature = 'phase1:demo {--reset : Reset only the fixed Phase 1 demo device and its access/control records}';
 
     protected $description = 'Create deterministic local Phase 1 users, a claimable device, and its QR image';
 
-    public function handle(): int
+    public function handle(DeviceActivationService $activations): int
     {
         if (app()->isProduction()) {
             $this->error('The Phase 1 demo command is disabled in production.');
@@ -44,7 +43,14 @@ final class SetupPhaseOneDemo extends Command
 
         try {
             $result = DB::transaction(fn (): array => $this->createDemoData());
-            $qrPath = $this->writeQr($result['payload']);
+            $prepared = $result['claimed']
+                ? null
+                : $activations->prepare(
+                    self::SERIAL,
+                    'owner@demo.lntb.test',
+                    'phase1-demo',
+                );
+            $qrPath = $prepared === null ? null : $this->writeQr($prepared['payload']);
         } catch (\Throwable $exception) {
             $this->error($exception->getMessage());
 
@@ -55,8 +61,9 @@ final class SetupPhaseOneDemo extends Command
         $this->line('Owner candidate: owner@demo.lntb.test / '.self::PASSWORD);
         $this->line('Shared candidates: shared1@demo.lntb.test through shared6@demo.lntb.test');
         $this->line('Device MAC: '.self::MAC);
-        $this->line('Claim code: '.self::CLAIM_CODE);
-        $this->line("QR image: {$qrPath}");
+        if ($qrPath !== null) {
+            $this->line("Owner-bound QR image: {$qrPath}");
+        }
 
         if ($result['claimed']) {
             $this->warn('The demo device is already claimed. Run with --reset to make it claimable again.');
@@ -65,12 +72,12 @@ final class SetupPhaseOneDemo extends Command
         return self::SUCCESS;
     }
 
-    /** @return array{payload: string, claimed: bool} */
+    /** @return array{claimed: bool} */
     private function createDemoData(): array
     {
         $activeUserStatusId = $this->lookupId(UserStatus::class, UserStatus::ACTIVE);
         $availableDeviceStatusId = $this->lookupId(DeviceStatus::class, DeviceStatus::AVAILABLE);
-        $deviceTypeId = $this->lookupId(DeviceType::class, DeviceType::SMART_FARM_CONTROLLER);
+        $deviceTypeId = $this->lookupId(DeviceType::class, DeviceType::FAN);
 
         $users = [
             ['name' => 'Demo Owner', 'phone_number' => '010000001', 'email' => 'owner@demo.lntb.test'],
@@ -103,10 +110,10 @@ final class SetupPhaseOneDemo extends Command
                 'device_type_id' => $deviceTypeId,
                 'device_status_id' => $availableDeviceStatusId,
                 'owner_user_id' => null,
-                'name' => 'LNTB Demo Controller',
+                'name' => 'LNTB Demo Fan',
                 'serial_number' => self::SERIAL,
                 'mac_address' => self::MAC,
-                'claim_code_hash' => Hash::make(self::CLAIM_CODE),
+                'claim_code_hash' => hash('sha256', random_bytes(32)),
                 'firmware_version' => '1.0.0-demo',
             ]);
         } elseif ($this->option('reset')) {
@@ -116,9 +123,9 @@ final class SetupPhaseOneDemo extends Command
                 'device_type_id' => $deviceTypeId,
                 'device_status_id' => $availableDeviceStatusId,
                 'owner_user_id' => null,
-                'name' => 'LNTB Demo Controller',
+                'name' => 'LNTB Demo Fan',
                 'mac_address' => self::MAC,
-                'claim_code_hash' => Hash::make(self::CLAIM_CODE),
+                'claim_code_hash' => hash('sha256', random_bytes(32)),
                 'firmware_version' => '1.0.0-demo',
                 'claim_code_used_at' => null,
                 'claimed_at' => null,
@@ -129,19 +136,13 @@ final class SetupPhaseOneDemo extends Command
                 'device_type_id' => $deviceTypeId,
                 'device_status_id' => $availableDeviceStatusId,
                 'mac_address' => self::MAC,
-                'claim_code_hash' => Hash::make(self::CLAIM_CODE),
+                'claim_code_hash' => hash('sha256', random_bytes(32)),
                 'firmware_version' => '1.0.0-demo',
                 'claim_code_used_at' => null,
             ])->save();
         }
 
-        $payload = json_encode([
-            'mac_address' => self::MAC,
-            'claim_code' => self::CLAIM_CODE,
-            'name' => 'LNTB Demo Controller',
-        ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
-
-        return ['payload' => $payload, 'claimed' => $device->owner_user_id !== null];
+        return ['claimed' => $device->owner_user_id !== null];
     }
 
     private function writeQr(string $payload): string

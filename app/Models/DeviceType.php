@@ -20,9 +20,9 @@ use Override;
 #[Fillable(['code', 'name', 'description'])]
 class DeviceType extends Model
 {
-    public const string SMART_FARM_CONTROLLER = 'smart_farm_controller';
+    public const string FAN = 'fan';
 
-    public const int ID_SMART_FARM_CONTROLLER = 1;
+    public const string ROOF = 'roof';
 
     public const string CAMERA = 'camera';
 

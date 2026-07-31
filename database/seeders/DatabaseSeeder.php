@@ -11,6 +11,7 @@ use App\Models\DeviceType;
 use App\Models\NotificationStatus;
 use App\Models\NotificationType;
 use App\Models\UserStatus;
+use App\Services\TestDataSeeder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
 
@@ -24,7 +25,8 @@ class DatabaseSeeder extends Seeder
             UserStatus::CLOSED => 'Closed',
         ]);
         $this->seedLookup(DeviceType::class, [
-            DeviceType::SMART_FARM_CONTROLLER => 'Smart Farm Controller',
+            DeviceType::FAN => 'Fan',
+            DeviceType::ROOF => 'Roof',
             DeviceType::CAMERA => 'Camera',
             DeviceType::WATER_ENERGY_METER => 'Water & Energy Meter',
         ]);
@@ -54,6 +56,13 @@ class DatabaseSeeder extends Seeder
             NotificationStatus::READ => 'Read',
             NotificationStatus::DELETED => 'Deleted',
         ]);
+
+        if (
+            app()->environment(['local', 'testing'])
+            && config('test_data.seed_with_database')
+        ) {
+            app(TestDataSeeder::class)->seed();
+        }
     }
 
     /** @param class-string<Model> $model */

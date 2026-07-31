@@ -25,7 +25,7 @@ final class DeviceControlController extends Controller
     {
         $this->authorize('viewHistory', $device);
         $perPage = min(max((int) $request->integer('per_page', 20), 1), 100);
-        $page = $device->controls()->with(['user.status', 'status'])->latest('requested_at')->paginate($perPage);
+        $page = $device->controls()->with(['device.type', 'user.status', 'status'])->latest('requested_at')->paginate($perPage);
 
         return ApiResponse::success('Control history retrieved successfully.',
             data: DeviceControlResource::collection($page->getCollection()), meta: [
@@ -68,7 +68,7 @@ final class DeviceControlController extends Controller
         $this->authorize('control', $device);
         $control = $this->controls->create($device, $request->user(), $request->validated());
 
-        return ApiResponse::success('Control command created successfully.', DeviceControlResource::make($control), 201);
+        return ApiResponse::success('Control command created successfully.', DeviceControlResource::make($control->load(['device.type', 'status'])), 201);
     }
 
     public function batch(CreateBatchDeviceControlRequest $request): JsonResponse
@@ -81,6 +81,7 @@ final class DeviceControlController extends Controller
         ]);
         foreach ($result['results'] as &$item) {
             if (($item['accepted'] ?? false) === true) {
+                $item['control']->load(['device.type', 'status']);
                 $item['control'] = DeviceControlResource::make($item['control'])->resolve($request);
             }
         }
@@ -96,6 +97,6 @@ final class DeviceControlController extends Controller
             throw new BusinessException('CONTROL_NOT_FOUND', 'The control command was not found.', 404);
         }
 
-        return ApiResponse::success('Control command retrieved successfully.', DeviceControlResource::make($control->load(['user.status', 'status'])));
+        return ApiResponse::success('Control command retrieved successfully.', DeviceControlResource::make($control->load(['device.type', 'user.status', 'status'])));
     }
 }

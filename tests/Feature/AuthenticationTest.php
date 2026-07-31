@@ -7,6 +7,7 @@ use App\Models\DeviceStatus;
 use App\Models\DeviceType;
 use App\Models\User;
 use App\Models\UserStatus;
+use App\Services\DeviceActivationService;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -30,7 +31,7 @@ function createDevice(): array
     $mac = 'AA:BB:CC:DD:EE:01';
 
     $device = Device::query()->create([
-        'device_type_id' => DeviceType::ID_SMART_FARM_CONTROLLER,
+        'device_type_id' => DeviceType::query()->where('code', DeviceType::FAN)->valueOrFail('id'),
         'device_status_id' => DeviceStatus::ID_AVAILABLE,
         'serial_number' => 'SN-TEST-001',
         'mac_address' => $mac,
@@ -40,6 +41,17 @@ function createDevice(): array
     ]);
 
     return ['device' => $device, 'claim_code' => $claimCode];
+}
+
+function prepareActivation(Device $device, User $user): array
+{
+    $prepared = app(DeviceActivationService::class)->prepare(
+        $device->serial_number,
+        $user->country_code.$user->phone_number,
+        'test-operator',
+    );
+
+    return json_decode($prepared['payload'], true, flags: JSON_THROW_ON_ERROR);
 }
 
 // ─── AUTH ─────────────────────────────────────────────────────────
@@ -167,10 +179,11 @@ it('claims a device', function (): void {
     $user = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $user->createToken('test')->plainTextToken;
     $d = createDevice();
+    $activation = prepareActivation($d['device'], $user);
 
     $response = $this->postJson('/api/v1/devices/claim', [
-        'mac_address' => $d['device']->mac_address,
-        'claim_code' => $d['claim_code'],
+        'device_ref' => $activation['device_ref'],
+        'activation_token' => $activation['activation_token'],
         'name' => 'My Controller',
     ], authHeaders($token));
 
@@ -182,14 +195,15 @@ it('fails claiming already claimed device', function (): void {
     $user = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $user->createToken('test')->plainTextToken;
     $d = createDevice();
+    $activation = prepareActivation($d['device'], $user);
     $d['device']->update(['owner_user_id' => User::factory()->create()->id]);
 
     $response = $this->postJson('/api/v1/devices/claim', [
-        'mac_address' => $d['device']->mac_address,
-        'claim_code' => $d['claim_code'],
+        'device_ref' => $activation['device_ref'],
+        'activation_token' => $activation['activation_token'],
     ], authHeaders($token));
 
-    $response->assertStatus(409);
+    $response->assertStatus(422);
 });
 
 it('shows a device', function (): void {
@@ -395,9 +409,10 @@ it('updates device name and placement', function (): void {
     $user = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $token = $user->createToken('test')->plainTextToken;
     $d = createDevice();
+    $activation = prepareActivation($d['device'], $user);
     $this->postJson('/api/v1/devices/claim', [
-        'mac_address' => $d['device']->mac_address,
-        'claim_code' => $d['claim_code'],
+        'device_ref' => $activation['device_ref'],
+        'activation_token' => $activation['activation_token'],
         'name' => 'Original',
     ], authHeaders($token))->assertStatus(200);
 
@@ -415,9 +430,10 @@ it('does not allow non-owner to update device', function (): void {
     $owner = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);
     $ownerToken = $owner->createToken('test')->plainTextToken;
     $d = createDevice();
+    $activation = prepareActivation($d['device'], $owner);
     $this->postJson('/api/v1/devices/claim', [
-        'mac_address' => $d['device']->mac_address,
-        'claim_code' => $d['claim_code'],
+        'device_ref' => $activation['device_ref'],
+        'activation_token' => $activation['activation_token'],
     ], authHeaders($ownerToken))->assertStatus(200);
 
     $other = User::factory()->create(['user_status_id' => UserStatus::ID_ACTIVE]);

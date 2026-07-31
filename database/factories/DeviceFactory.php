@@ -18,7 +18,7 @@ final class DeviceFactory extends Factory
     public function definition(): array
     {
         return [
-            'device_type_id' => DeviceType::query()->where('code', DeviceType::SMART_FARM_CONTROLLER)->value('id'),
+            'device_type_id' => DeviceType::query()->where('code', DeviceType::FAN)->value('id'),
             'device_status_id' => DeviceStatus::query()->where('code', DeviceStatus::AVAILABLE)->value('id'),
             'serial_number' => fake()->unique()->bothify('LNTB-########'),
             'mac_address' => implode(':', array_map(fn () => strtoupper(fake()->regexify('[0-9A-F]{2}')), range(1, 6))),
