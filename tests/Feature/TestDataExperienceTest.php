@@ -88,6 +88,38 @@ it('returns the seeded dashboard through authenticated APIs', function (): void 
         ->assertJsonMissing(['prototype']);
 });
 
+it('filters dashboard metrics, usage, and activity by a requested period', function (): void {
+    $owner = User::query()
+        ->where('country_code', TestDataSeeder::COUNTRY_CODE)
+        ->where('phone_number', TestDataSeeder::PHONE_NUMBER)
+        ->firstOrFail();
+    $farmId = DB::table('farms')->where('owner_user_id', $owner->id)->value('id');
+    Sanctum::actingAs($owner);
+
+    DB::table('sensor_readings')->where('farm_id', $farmId)->update([
+        'recorded_at' => now()->subDays(20),
+    ]);
+    DB::table('device_controls')
+        ->whereIn('device_id', DB::table('farm_devices')->where('farm_id', $farmId)->pluck('device_id'))
+        ->update(['requested_at' => now()->subDays(20)]);
+
+    $this->getJson("/api/v1/farms/{$farmId}/dashboard?period=today")
+        ->assertOk()
+        ->assertJsonCount(0, 'data.metrics')
+        ->assertJsonCount(0, 'data.activity')
+        ->assertJsonPath('data.usage.water_cubic_meters', 0.42);
+
+    $this->getJson("/api/v1/farms/{$farmId}/dashboard?period=30d")
+        ->assertOk()
+        ->assertJsonCount(4, 'data.metrics')
+        ->assertJsonCount(4, 'data.activity')
+        ->assertJsonPath('data.usage.water_cubic_meters', 0.42);
+
+    $this->getJson("/api/v1/farms/{$farmId}/dashboard?period=unsupported")
+        ->assertOk()
+        ->assertJsonCount(4, 'data.metrics');
+});
+
 it('includes device type on control history records', function (): void {
     $owner = User::query()
         ->where('country_code', TestDataSeeder::COUNTRY_CODE)

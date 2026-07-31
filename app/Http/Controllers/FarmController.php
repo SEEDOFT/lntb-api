@@ -40,10 +40,12 @@ final class FarmController extends Controller
     public function dashboard(Request $request, Farm $farm): JsonResponse
     {
         $this->authorizeFarm($request, $farm);
+        $period = $request->query('period');
+        $period = is_string($period) && in_array($period, ['today', '7d', '30d'], true) ? $period : null;
 
         return ApiResponse::success(
             'Farm dashboard retrieved successfully.',
-            $this->dashboards->dashboard($farm->load('status'), $request->user()),
+            $this->dashboards->dashboard($farm->load('status'), $request->user(), $period),
         );
     }
 

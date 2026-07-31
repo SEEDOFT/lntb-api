@@ -11,18 +11,22 @@ use Illuminate\Support\Facades\DB;
 final class FarmDashboardService
 {
     /** @return array<string, mixed> */
-    public function dashboard(Farm $farm, User $user): array
+    public function dashboard(Farm $farm, User $user, ?string $period = null): array
     {
+        $since = $this->periodStart($period);
+
         $metrics = DB::table('sensor_readings as readings')
             ->join('sensor_types as types', 'types.id', '=', 'readings.sensor_type_id')
             ->join('devices', 'devices.id', '=', 'readings.device_id')
             ->join('device_types', 'device_types.id', '=', 'devices.device_type_id')
             ->where('readings.farm_id', $farm->id)
+            ->when($since !== null, fn ($query) => $query->where('readings.recorded_at', '>=', $since))
             ->whereIn(
                 'readings.id',
                 DB::table('sensor_readings')
                     ->selectRaw('MAX(id)')
                     ->where('farm_id', $farm->id)
+                    ->when($since !== null, fn ($query) => $query->where('recorded_at', '>=', $since))
                     ->groupBy('sensor_type_id'),
             )
             ->orderBy('types.code')
@@ -91,6 +95,7 @@ final class FarmDashboardService
         $deviceIds = $devices->pluck('id');
         $latestUsage = DB::table('usage_records')
             ->where('farm_id', $farm->id)
+            ->when($since !== null, fn ($query) => $query->where('recorded_on', '>=', $since->toDateString()))
             ->latest('recorded_on')
             ->first();
         $activity = DB::table('device_controls as controls')
@@ -98,6 +103,7 @@ final class FarmDashboardService
             ->join('devices', 'devices.id', '=', 'controls.device_id')
             ->join('device_types', 'device_types.id', '=', 'devices.device_type_id')
             ->whereIn('controls.device_id', $deviceIds)
+            ->when($since !== null, fn ($query) => $query->where('controls.requested_at', '>=', $since))
             ->latest('controls.requested_at')
             ->limit(10)
             ->get([
@@ -189,6 +195,17 @@ final class FarmDashboardService
     private function lookupId(string $table, string $code): int
     {
         return (int) DB::table($table)->where('code', $code)->value('id');
+    }
+
+    /** @return \Illuminate\Support\Carbon|null */
+    private function periodStart(?string $period)
+    {
+        return match ($period) {
+            'today' => now()->startOfDay(),
+            '7d' => now()->subDays(6)->startOfDay(),
+            '30d' => now()->subDays(29)->startOfDay(),
+            default => null,
+        };
     }
 
     /** @return array<string, mixed>|null */
